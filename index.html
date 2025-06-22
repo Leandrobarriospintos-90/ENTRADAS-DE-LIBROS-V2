@@ -109,6 +109,8 @@
                         <button id="importJsonBtn" class="btn btn-info btn-sm">Importar JSON</button>
                         <button id="exportJsonBtn" class="btn btn-secondary btn-sm" disabled>Exportar JSON</button>
                         <button id="exportHtmlBtn" class="btn btn-success btn-sm" disabled>Exportar HTML</button>
+                        <!-- New button for exporting HTML with forced work title visibility -->
+                        <button id="exportHtmlWithTitleBtn" class="btn btn-success btn-sm" disabled>HTML / Título</button>
                         
                         <!-- Checkbox for toggling all export -->
                         <div class="flex items-center">
@@ -310,6 +312,7 @@
         const addEntryBtn = document.getElementById('addEntryBtn');
         const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const exportJsonBtn = document.getElementById('exportJsonBtn');
+        const exportHtmlWithTitleBtn = document.getElementById('exportHtmlWithTitleBtn'); // New: Export HTML with forced work title button
         const importJsonBtn = document.getElementById('importJsonBtn');
         const importFileEl = document.getElementById('importFile');
         const clearDataBtn = document.getElementById('clearDataBtn');
@@ -366,6 +369,8 @@
             
             exportHtmlBtn.disabled = !canAnyBeExported;
             exportJsonBtn.disabled = !canAnyBeExported;
+            // Enable/disable the new export button based on whether there are any exportable entries
+            exportHtmlWithTitleBtn.disabled = !canAnyBeExported;
             
             // Enable/disable the "Todo" checkbox based on whether there are any entries
             toggleAllExportCheckbox.disabled = totalCount === 0;
@@ -420,6 +425,10 @@
                 if (typeof entry.canExport === 'undefined') {
                     entry.canExport = true;
                 }
+                // Ensure `workTitleVisible` property exists for old entries, default to false
+                if (typeof entry.workTitleVisible === 'undefined') {
+                    entry.workTitleVisible = false;
+                }
             });
         }
 
@@ -427,6 +436,9 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(localEntries));
         }
 
+        /**
+         * Renders the entries into the DOM, applying current filters and sorting.
+         */
         function renderEntries() {
             const selectedCollection = collectionFilter.value;
             let filteredEntries = [...localEntries];
@@ -533,6 +545,12 @@
             updateUI();
         }
 
+        /**
+         * Downloads content as a file.
+         * @param {string} content - The content to download.
+         * @param {string} fileName - The name of the file.
+         * @param {string} contentType - The MIME type of the file.
+         */
         function downloadFile(content, fileName, contentType) {
             const blob = new Blob([content], { type: contentType });
             const url = URL.createObjectURL(blob);
@@ -545,15 +563,30 @@
             URL.revokeObjectURL(url);
         }
 
-        function generateHtmlForExport(entries) {
+        /**
+         * Generates the HTML string for exporting catalog entries.
+         * @param {Array<Object>} entries - The array of entries to export.
+         * @param {boolean} forceWorkTitleVisible - If true, forces 'workTitleVisible' to true for all entries in the export.
+         * @returns {string} The generated HTML string.
+         */
+        function generateHtmlForExport(entries, forceWorkTitleVisible = false) {
             // Filter entries to include only those marked for export
             const exportableEntries = entries.filter(entry => entry.canExport);
 
+            // Create a deep copy of exportableEntries to avoid modifying the original localEntries
+            // when forceWorkTitleVisible is true.
+            let entriesToRender = JSON.parse(JSON.stringify(exportableEntries));
+
+            if (forceWorkTitleVisible) {
+                entriesToRender.forEach(entry => {
+                    entry.workTitleVisible = true;
+                });
+            }
+
             // Important: Exported HTML should respect the *current* sorting, if date sort is active.
-            // If date sort is not active, it should use the default collection/author sort.
-            let sortedEntriesForExport = [...exportableEntries];
+            // If date sort is not active, it should use the default collection/date sort (descending date).
             if (sortByDateDirection !== 0) {
-                sortedEntriesForExport.sort((a, b) => {
+                entriesToRender.sort((a, b) => {
                     const getDateValue = (entry) => {
                         const year = entry.publicationYear || 0;
                         const month = entry.month || 0;
@@ -571,7 +604,7 @@
                     return sortByDateDirection * (dateA - dateB);
                 });
             } else {
-                sortedEntriesForExport.sort((a, b) => {
+                entriesToRender.sort((a, b) => {
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
                     
@@ -606,7 +639,7 @@
                 }
             };
             
-            const entryBlocks = sortedEntriesForExport.map(entry => {
+            const entryBlocks = entriesToRender.map(entry => {
                 const display = (value, fallback = '') => value || fallback;
                 const priceText = (value) => value ? `Precio pre-compra online con 50% de descuento: $${Number(value).toFixed(2)}.-` : '';
                 const collectionColor = getCollectionColor(entry.collection);
@@ -631,7 +664,7 @@
                     : '<div style="margin-bottom: 1.5rem;"></div>';
                 
                 let workTitleHtml = '';
-                if (entry.workTitle && entry.workTitleVisible) {
+                if (entry.workTitle && entry.workTitleVisible) { // Check workTitleVisible
                     workTitleHtml = `<h3 class="work-title">${display(entry.workTitle)}</h3>`;
                 }
 
@@ -875,9 +908,23 @@
                     showNotification('No hay entradas seleccionadas para exportar.', true);
                     return;
                 }
-                const htmlContent = generateHtmlForExport(exportableEntries);
+                // Call generateHtmlForExport without forcing workTitleVisible
+                const htmlContent = generateHtmlForExport(exportableEntries, false);
                 downloadFile(htmlContent, 'catalogo.html', 'text/html');
                 showNotification('Catálogo HTML exportado con éxito.');
+            });
+
+            // New: Export to HTML with forced work title visibility
+            exportHtmlWithTitleBtn.addEventListener('click', () => {
+                const exportableEntries = localEntries.filter(entry => entry.canExport);
+                if (exportableEntries.length === 0) {
+                    showNotification('No hay entradas seleccionadas para exportar.', true);
+                    return;
+                }
+                // Call generateHtmlForExport with forceWorkTitleVisible = true
+                const htmlContent = generateHtmlForExport(exportableEntries, true);
+                downloadFile(htmlContent, 'catalogo_con_titulos.html', 'text/html');
+                showNotification('Catálogo HTML exportado con "Título de Obra" visible.');
             });
 
             // Export to JSON
@@ -919,7 +966,12 @@
                     showModal(confirmModal);
 
                     confirmAction = () => {
-                        localEntries = importedEntries.map(entry => ({...entry, id: entry.id || crypto.randomUUID(), canExport: typeof entry.canExport === 'boolean' ? entry.canExport : true })); // Ensure IDs and canExport property
+                        localEntries = importedEntries.map(entry => ({
+                            ...entry,
+                            id: entry.id || crypto.randomUUID(),
+                            canExport: typeof entry.canExport === 'boolean' ? entry.canExport : true,
+                            workTitleVisible: typeof entry.workTitleVisible === 'boolean' ? entry.workTitleVisible : false // Ensure workTitleVisible for imported entries
+                        })); 
                         saveEntriesToStorage();
                         renderEntries();
                         showNotification(`Se importaron ${importedEntries.length} entradas con éxito.`);
@@ -1051,6 +1103,7 @@
                 document.getElementById('entryAuthor').value = entryToEdit.author || '';
                 document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Autor';
                 document.getElementById('entryWorkTitle').value = entryToEdit.workTitle || '';
+                // Set the radio button for workTitleVisibility
                 if(entryToEdit.workTitleVisible) {
                     document.querySelector('input[name="workTitleVisibility"][value="visible"]').checked = true;
                 } else {
