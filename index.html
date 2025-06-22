@@ -118,7 +118,7 @@
 
                         <!-- Button for toggling date sorting (now with icons) -->
                         <button id="toggleDateSortBtn" class="btn btn-secondary btn-sm">
-                            <span id="sortText">Ordenar por Fecha</span>
+                            <span id="sortText">Orden</span>
                             <span id="sortIcon">
                                 <!-- Default icon (no sort) -->
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -382,20 +382,19 @@
 
             // Update date sort button text and icon
             let sortIconSvg = '';
-            let sortButtonText = 'Ordenar por Fecha';
+            // The text should always be "Orden" as per user request
+            let sortButtonText = 'Orden';
 
             if (sortByDateDirection === 1) { // Ascending
-                sortButtonText = 'Ordenar por Fecha (Asc)';
                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l4-4m0 0l4 4m-4-4v18" />
                               </svg>`;
             } else if (sortByDateDirection === -1) { // Descending
-                sortButtonText = 'Ordenar por Fecha (Desc)';
                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
                               </svg>`;
             } else { // No sort
-                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                             </svg>`;
             }
@@ -440,7 +439,7 @@
 
             if (sortByDateDirection !== 0) { // If date sorting is enabled
                 currentSortedEntries.sort((a, b) => {
-                    // Convert year, month, day to a comparable format (e.g., YYYYMMDD)
+                    // Convert year, month, day to a comparable format (e.g.,YYYYMMDD)
                     // Treat missing values as 0 for consistent sorting, but handle undefined years carefully
                     const getDateValue = (entry) => {
                         const year = entry.publicationYear || 0;
@@ -471,8 +470,8 @@
             
             entriesList.innerHTML = ''; // Clear previous list
             if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Only show empty state if no entries at all
-                emptyState.classList.remove('hidden');
-                entriesList.classList.add('hidden');
+                emptyState.classList.add('hidden'); // Ensure hidden state when no entries
+                entriesList.classList.add('hidden'); // Ensure hidden state when no entries
             } else if (currentSortedEntries.length === 0 && localEntries.length > 0) { // No entries match filter
                 entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No hay entradas que coincidan con la colección seleccionada.</div>`;
                 emptyState.classList.add('hidden');
@@ -555,7 +554,7 @@
                     return sortByDateDirection * (dateA - dateB);
                 });
             } else {
-                 sortedEntriesForExport.sort((a, b) => {
+                sortedEntriesForExport.sort((a, b) => {
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
                     return (a.author || '').localeCompare(b.author || '');
@@ -874,7 +873,7 @@
                     try {
                         importedEntries = JSON.parse(e.target.result);
                         if (!Array.isArray(importedEntries)) {
-                           throw new Error("El archivo JSON no contiene un array de entradas.");
+                            throw new Error("El archivo JSON no contiene un array de entradas.");
                         }
                     } catch (err) {
                         showNotification(`Error al leer el archivo: ${err.message}`, true);
@@ -966,7 +965,7 @@
 
                     saveEntriesToStorage(); // Save the updated canExport states
                     if (entriesModifiedCount > 0) {
-                           showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
+                            showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
                     } else if (entriesInSelectedCollection.length > 0) {
                         showNotification(`Las entradas de "${selectedCollection}" ya estaban en el estado deseado.`);
                     } else {
