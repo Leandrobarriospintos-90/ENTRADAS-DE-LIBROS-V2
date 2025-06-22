@@ -460,11 +460,28 @@
                     return sortByDateDirection * (dateA - dateB);
                 });
             } else {
-                // Original sorting by collection, then author
+                // Sorting by collection, then by date (Year, Month, Day) in DESCENDING order
                 currentSortedEntries.sort((a, b) => {
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
-                    return (a.author || '').localeCompare(b.author || '');
+
+                    // Compare by date (year, month, day) when collections are the same
+                    const getDateValue = (entry) => {
+                        const year = entry.publicationYear || 0;
+                        const month = entry.month || 0;
+                        const day = entry.day || 0;
+                        return year * 10000 + month * 100 + day; // YYYYMMDD numeric representation
+                    };
+
+                    const dateA = getDateValue(a);
+                    const dateB = getDateValue(b);
+
+                    // Handle cases where a year might be 0 (meaning undefined), sorting them at the end
+                    if (a.publicationYear === null && b.publicationYear === null) return 0;
+                    if (a.publicationYear === null) return 1; // a comes after b
+                    if (b.publicationYear === null) return -1; // b comes after a
+
+                    return dateB - dateA; // Default to DESCENDING date sort within collection
                 });
             }
             
@@ -557,7 +574,22 @@
                 sortedEntriesForExport.sort((a, b) => {
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
-                    return (a.author || '').localeCompare(b.author || '');
+                    
+                    const getDateValue = (entry) => {
+                        const year = entry.publicationYear || 0;
+                        const month = entry.month || 0;
+                        const day = entry.day || 0;
+                        return year * 10000 + month * 100 + day;
+                    };
+
+                    const dateA = getDateValue(a);
+                    const dateB = getDateValue(b);
+
+                    if (a.publicationYear === null && b.publicationYear === null) return 0;
+                    if (a.publicationYear === null) return 1;
+                    if (b.publicationYear === null) return -1;
+                    
+                    return dateB - dateA; // Default to DESCENDING date sort within collection
                 });
             }
             
@@ -985,7 +1017,7 @@
                 } else if (sortByDateDirection === -1) {
                     showNotification('Ordenado por fecha exacta (Año, Mes, Día) de forma descendente.');
                 } else {
-                    showNotification('Ordenado por colección y autor.');
+                    showNotification('Ordenado por colección y fecha.');
                 }
             });
 
