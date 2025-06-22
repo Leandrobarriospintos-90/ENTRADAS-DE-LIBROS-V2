@@ -638,6 +638,9 @@
                         return "#D83A39"; // Default color
                 }
             };
+
+            // Conditional style for book-title based on forceWorkTitleVisible
+            const bookTitleFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
             
             const entryBlocks = entriesToRender.map(entry => {
                 const display = (value, fallback = '') => value || fallback;
@@ -710,7 +713,7 @@
                         </div>
                         <div class="book-details">
                             ${workTitleHtml}
-                            <h2 class="book-title">${display(entry.author, 'Autor no especificado')}</h2>
+                            <h2 class="book-title" style="font-size: ${bookTitleFontSize};">${display(entry.author, 'Autor no especificado')}</h2>
                             <p class="price" style="color: LimeGreen;">${priceText(entry.price)}</p>
                             <div class="separator" style="background-color: LimeGreen;"></div>
                             <div class="buttons-container">
