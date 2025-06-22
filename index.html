@@ -344,6 +344,9 @@
         // sortByDateDirection: 0 = No sort, 1 = Ascending, -1 = Descending
         let sortByDateDirection = 0; // New: State for date sorting direction
 
+        // Global variable to store currently displayed entries for UI updates
+        let displayedEntriesForUI = [];
+
         // --- UI Functions ---
         function showModal(modalElement) { modalElement.classList.add('visible'); }
         function hideModal(modalElement) { modalElement.classList.remove('visible'); }
@@ -366,31 +369,29 @@
         }
         
         function updateUI() {
+            // Check if any entry (globally, not just displayed) is marked for export
             const canAnyBeExported = localEntries.some(entry => entry.canExport);
             const totalCount = localEntries.length;
             entryCounter.textContent = totalCount;
             
             exportHtmlBtn.disabled = !canAnyBeExported;
             exportJsonBtn.disabled = !canAnyBeExported;
-            // Enable/disable the new export button based on whether there are any exportable entries
             exportHtmlWithTitleBtn.disabled = !canAnyBeExported;
             
-            // Enable/disable the "Todo" checkbox based on whether there are any entries
-            toggleAllExportCheckbox.disabled = totalCount === 0;
+            // Enable/disable the "Todo" checkbox based on whether there are any displayed entries
+            toggleAllExportCheckbox.disabled = displayedEntriesForUI.length === 0;
 
-            // Set the "Todo" checkbox state
-            if (totalCount === 0) {
+            // Set the "Todo" checkbox state based on *currently displayed* entries
+            if (displayedEntriesForUI.length === 0) {
                 toggleAllExportCheckbox.checked = false;
             } else {
-                // If all entries are exportable, check "Todo"; otherwise, uncheck
-                toggleAllExportCheckbox.checked = localEntries.every(entry => entry.canExport);
+                toggleAllExportCheckbox.checked = displayedEntriesForUI.every(entry => entry.canExport);
             }
 
             clearDataBtn.disabled = totalCount === 0;
 
             // Update date sort button text and icon
             let sortIconSvg = '';
-            // The text should always be "Orden" as per user request
             let sortButtonText = 'Orden';
 
             if (sortByDateDirection === 1) { // Ascending
@@ -513,6 +514,8 @@
             }
             
             entriesList.innerHTML = ''; // Clear previous list
+            displayedEntriesForUI = currentSortedEntries; // Store current displayed entries globally
+
             if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Only show empty state if no entries at all
                 emptyState.classList.remove('hidden'); // Show empty state
                 entriesList.classList.add('hidden'); // Hide entries list
@@ -654,7 +657,7 @@
                 }
             };
 
-            // Conditional style for book-title based on forceWorkTitleVisible
+            // Conditional style for book-title (author) based on forceWorkTitleVisible
             const bookAuthorFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
             
             const entryBlocks = entriesToRender.map(entry => {
@@ -1034,12 +1037,25 @@
             // Handle "Todo" checkbox change
             toggleAllExportCheckbox.addEventListener('change', (event) => {
                 const shouldCheckAll = event.target.checked;
-                localEntries.forEach(entry => {
-                    entry.canExport = shouldCheckAll;
+                let changesMade = false;
+
+                // Iterate over currently displayed entries (which are already filtered)
+                // And update their 'canExport' status in the main 'localEntries' array
+                displayedEntriesForUI.forEach(displayedEntry => {
+                    const originalEntry = localEntries.find(entry => entry.id === displayedEntry.id);
+                    if (originalEntry && originalEntry.canExport !== shouldCheckAll) {
+                        originalEntry.canExport = shouldCheckAll;
+                        changesMade = true;
+                    }
                 });
-                saveEntriesToStorage();
-                renderEntries(); // Re-render to update all individual checkboxes
-                showNotification(shouldCheckAll ? 'Todas las entradas seleccionadas para exportar.' : 'Todas las entradas deseleccionadas para exportar.');
+
+                if (changesMade) {
+                    saveEntriesToStorage();
+                    renderEntries(); // Re-render to reflect the individual checkbox changes and update overall UI state
+                    showNotification(shouldCheckAll ? 'Todas las entradas visibles seleccionadas para exportar.' : 'Todas las entradas visibles deseleccionadas para exportar.');
+                } else {
+                    showNotification('No hubo cambios en la selección de exportación de las entradas visibles.');
+                }
             });
 
             // Handle collection filter change - now also toggles export status for that collection
