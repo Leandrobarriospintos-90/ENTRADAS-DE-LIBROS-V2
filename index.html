@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recolector de Entradas de Catálogo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --main-bg: #f3f4f6; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg);
+            color: #374151;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            overflow-y: auto;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;
+            transition: all 0.2s ease-in-out; text-align: center; cursor: pointer; border: 1px solid transparent;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn:disabled {
+            background-color: #d1d5db; cursor: not-allowed; opacity: 0.7;
+        }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #1d4ed8; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-secondary:hover:not(:disabled) { background-color: #4b5563; }
+        .btn-success { background-color: #16a34a; color: white; }
+        .btn-success:hover:not(:disabled) { background-color: #15803d; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-danger:hover:not(:disabled) { background-color: #b91c1c; }
+        .btn-info { background-color: #3b82f6; color: white; }
+        .btn-info:hover:not(:disabled) { background-color: #2563eb; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+
+        .form-input, .form-select, .form-textarea, .form-checkbox {
+            border: 1px solid #d1d5db; border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: #ffffff; color: #333;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 0.5rem 0.75rem;
+        }
+        .form-textarea { min-height: 80px; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus, .form-checkbox:focus {
+            outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 40; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-container {
+            background: white; padding: 2rem; border-radius: 0.75rem;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95); transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-container { transform: scale(1); }
+    </style>
+</head>
+<body class="flex flex-col">
+    <input type="file" id="importFile" class="hidden" accept=".json">
+    <!-- App Container -->
+    <div id="appContainer" class="flex flex-col h-full">
+        
+        <!-- Header -->
+        <header id="appHeader" class="p-4 bg-white border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Entradas de libros</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Collection Filter Dropdown -->
+                <select id="collectionFilter" class="form-select pl-3 pr-8 py-2 rounded-md shadow-sm border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <option value="">Todas las Colecciones</option>
+                    <option value="Ciencias">Ciencias</option>
+                    <option value="Sociedad en Movimiento">Sociedad en Movimiento</option>
+                    <option value="Aulas Universitarias">Aulas Universitarias</option>
+                    <option value="Sin Colección">Sin Colección</option>
+                </select>
+                <button id="addEntryBtn" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    <span>Añadir Entrada</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4 md:p-8 w-full max-w-7xl mx-auto flex flex-col">
+            <div id="content" class="w-full flex-col flex-grow">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">
+                        Entradas Recopiladas (<span id="entryCounter">0</span>)
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="importJsonBtn" class="btn btn-info btn-sm">Importar JSON</button>
+                        <button id="exportJsonBtn" class="btn btn-secondary btn-sm" disabled>Exportar JSON</button>
+                        <button id="exportHtmlBtn" class="btn btn-success btn-sm" disabled>Exportar HTML</button>
+                        
+                        <!-- Checkbox for toggling all export -->
+                        <div class="flex items-center">
+                            <input type="checkbox" id="toggleAllExportCheckbox" class="form-checkbox h-4 w-4 text-blue-600" disabled>
+                            <label for="toggleAllExportCheckbox" class="ml-2 text-sm text-gray-700">Todo</label>
+                        </div>
+
+                        <!-- Button for toggling date sorting -->
+                        <button id="toggleDateSortBtn" class="btn btn-secondary btn-sm">Ordenar por Fecha</button>
+
+                        <button id="clearDataBtn" class="btn btn-danger btn-sm" disabled>Limpiar Todo</button>
+                    </div>
+                </div>
+                <div id="entriesList" class="bg-white rounded-xl shadow-md divide-y divide-gray-200">
+                    <!-- Entries will be dynamically inserted here -->
+                </div>
+                <div id="emptyState" class="text-center py-16 px-8 bg-white rounded-xl shadow-md hidden">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="mt-2 text-xl font-semibold text-gray-800">No hay entradas todavía</h3>
+                    <p class="mt-1 text-sm text-gray-500">Haz clic en "Añadir Entrada" para empezar a construir tu catálogo.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer id="appFooter" class="flex-shrink-0 text-center py-3 bg-gray-200 border-t">
+            <p class="text-xs text-gray-600">&copy; <span id="year"></span> EdUNLu.</p>
+        </footer>
+    </div>
+    
+    <!-- Add/Edit Entry Modal -->
+    <div id="addEntryModal" class="modal-overlay">
+        <div class="modal-container">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800">Añadir Nueva Entrada</h2>
+            <form id="addEntryForm">
+                <input type="hidden" id="entryEditId">
+                <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <div>
+                        <label for="entryPrice" class="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                        <input type="number" id="entryPrice" class="form-input" placeholder="Ej: 1500.50" step="0.01">
+                    </div>
+                    <div>
+                        <label for="entryCollection" class="block text-sm font-medium text-gray-700 mb-1">Colección</label>
+                        <select id="entryCollection" class="form-select" required>
+                            <option value="">(Seleccionar colección)</option>
+                            <option>Ciencias</option>
+                            <option>Sociedad en Movimiento</option>
+                            <option>Aulas Universitarias</option>
+                            <option>Sin Colección</option>
+                        </select>
+                    </div>
+                    <div id="seriesHistoriasDeVidaWrapper" class="hidden pl-2">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="entrySeriesHistoriasDeVida" name="series" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                            <span class="text-sm font-medium text-gray-700">Serie Historias de Vida</span>
+                        </label>
+                    </div>
+                    <div id="seriesApuntesYTrabajosPracticosWrapper" class="hidden pl-2">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="entrySeriesApuntesYTrabajosPracticos" name="series" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                            <span class="text-sm font-medium text-gray-700">Serie Apuntes y Trabajos Prácticos</span>
+                        </label>
+                    </div>
+                    <!-- New fields for Month and Day -->
+                    <div class="border p-4 rounded-md bg-gray-50">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Metadatos de Publicación (No visibles en exportación HTML)</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="entryMonth" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+                                <input type="number" id="entryMonth" class="form-input" placeholder="Ej: 1 (Enero)" min="1" max="12">
+                            </div>
+                            <div>
+                                <label for="entryDay" class="block text-sm font-medium text-gray-700 mb-1">Día</label>
+                                <input type="number" id="entryDay" class="form-input" placeholder="Ej: 15" min="1" max="31">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="entryAuthor" class="block text-sm font-medium text-gray-700 mb-1">Autor / Fuente</label>
+                        <input type="text" id="entryAuthor" class="form-input" required placeholder="Nombre del autor o fuente">
+                    </div>
+                    <div>
+                        <label for="entrySourceType" class="block text-sm font-medium text-gray-700 mb-1">Rol de la Fuente</label>
+                        <select id="entrySourceType" class="form-select" required>
+                            <option>Autor</option>
+                            <option>Autora</option>
+                            <option>Autores</option>
+                            <option>Autoras</option>
+                            <option>Director</option>
+                            <option>Directora</option>
+                            <option>Directores</option>
+                            <option>Directoras</option>
+                            <option>Coordinador</option>
+                            <option>Coordinadora</option>
+                            <option>Coordinadores</option>
+                            <option>Coordinadoras</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="entryWorkTitle" class="block text-sm font-medium text-gray-700 mb-1">Título de obra (Opcional)</label>
+                        <input type="text" id="entryWorkTitle" class="form-input" placeholder="Título de la obra completa">
+                    </div>
+                    <div class="pl-2">
+                        <span class="text-sm font-medium text-gray-700">Visibilidad del Título de Obra:</span>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="workTitleVisibility" value="visible" class="form-checkbox h-4 w-4 text-blue-600">
+                                <span class="ml-2 text-sm">Visible en HTML</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="workTitleVisibility" value="hidden" class="form-checkbox h-4 w-4 text-blue-600" checked>
+                                <span class="ml-2 text-sm">No visible en HTML</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="entryPublishYear" class="block text-sm font-medium text-gray-700 mb-1">Año de publicación</label>
+                        <input type="number" id="entryPublishYear" class="form-input" placeholder="Ej: 2023" min="1000" max="3000">
+                    </div>
+                    <div>
+                        <label for="entryPages" class="block text-sm font-medium text-gray-700 mb-1">Páginas</label>
+                        <input type="number" id="entryPages" class="form-input" placeholder="Ej: 256">
+                    </div>
+                    <div>
+                        <label for="entryFormat" class="block text-sm font-medium text-gray-700 mb-1">Formato</label>
+                        <input type="text" id="entryFormat" class="form-input" placeholder="Ej: 23 x 16 cm">
+                    </div>
+                    <div>
+                        <label for="entryCoverUrl" class="block text-sm font-medium text-gray-700 mb-1">URL de tapa</label>
+                        <input type="url" id="entryCoverUrl" class="form-input" placeholder="https://ejemplo.com/portada.jpg">
+                    </div>
+                    <div>
+                        <label for="entryPurchaseUrl" class="block text-sm font-medium text-gray-700 mb-1">URL de Compra (Opcional)</label>
+                        <input type="url" id="entryPurchaseUrl" class="form-input" placeholder="https://tienda.ejemplo.com/producto">
+                    </div>
+                    <div>
+                        <label for="entryPdfUrl" class="block text-sm font-medium text-gray-700 mb-1">URL de Descarga PDF (Opcional)</label>
+                        <input type="url" id="entryPdfUrl" class="form-input" placeholder="https://ejemplo.com/descarga.pdf">
+                    </div>
+                    <div>
+                        <label for="entryEpubUrl" class="block text-sm font-medium text-gray-700 mb-1">URL de Descarga EPUB (Opcional)</label>
+                        <input type="url" id="entryEpubUrl" class="form-input" placeholder="https://ejemplo.com/descarga.epub">
+                    </div>
+                    <div>
+                        <label for="entryIsbn" class="block text-sm font-medium text-gray-700 mb-1">ISBN (Opcional)</label>
+                        <input type="text" id="entryIsbn" class="form-input" placeholder="978-3-16-148410-0">
+                    </div>
+                    <div>
+                        <label for="entryIsbnDigital" class="block text-sm font-medium text-gray-700 mb-1">ISBN Digital (Opcional)</label>
+                        <input type="text" id="entryIsbnDigital" class="form-input" placeholder="978-0-12-345678-9">
+                    </div>
+                    <div>
+                        <label for="entryDescription" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                        <textarea id="entryDescription" class="form-textarea" placeholder="Breve resumen o notas..."></textarea>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" id="cancelModalBtn" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" id="saveModalBtn" class="btn btn-primary">Guardar Entrada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal (for clear all and delete single) -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-container">
+            <h2 id="confirmModalTitle" class="text-2xl font-bold mb-4 text-gray-800">¿Estás seguro?</h2>
+            <p id="confirmModalText" class="text-gray-600 mb-6">Esta acción es irreversible.</p>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="cancelConfirmBtn" class="btn btn-secondary">Cancelar</button>
+                <button type="button" id="confirmBtn" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="fixed top-5 right-5 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg transform translate-x-[150%] transition-transform duration-500 ease-in-out z-50">
+        <p id="notificationMessage">Message here</p>
+    </div>
+
+    <script>
+        // --- Global DOM Variables ---
+        const content = document.getElementById('content');
+        const entryCounter = document.getElementById('entryCounter');
+        const emptyState = document.getElementById('emptyState');
+        const entriesList = document.getElementById('entriesList');
+        
+        const addEntryBtn = document.getElementById('addEntryBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
+        const importJsonBtn = document.getElementById('importJsonBtn');
+        const importFileEl = document.getElementById('importFile');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const toggleAllExportCheckbox = document.getElementById('toggleAllExportCheckbox');
+        const collectionFilter = document.getElementById('collectionFilter');
+        const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // New: Date Sort Button
+
+        const addEntryModal = document.getElementById('addEntryModal');
+        const addEntryForm = document.getElementById('addEntryForm');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const saveModalBtn = document.getElementById('saveModalBtn');
+        
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalText = document.getElementById('confirmModalText');
+        const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+        // --- Local Data Store ---
+        let localEntries = [];
+        let confirmAction = null;
+        const STORAGE_KEY = 'catalogEntries';
+        let sortByDateEnabled = false; // New: State for date sorting
+
+        // --- UI Functions ---
+        function showModal(modalElement) { modalElement.classList.add('visible'); }
+        function hideModal(modalElement) { modalElement.classList.remove('visible'); }
+        
+        function showNotification(message, isError = false) {
+            const toast = document.getElementById('notificationToast');
+            const msgEl = document.getElementById('notificationMessage');
+            
+            msgEl.textContent = message;
+            toast.className = 'fixed top-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg transform transition-transform duration-500 ease-in-out z-50'; // Reset classes
+            toast.classList.add(isError ? 'bg-red-600' : 'bg-green-500');
+
+            // Show
+            toast.classList.remove('translate-x-[150%]');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-[150%]');
+            }, 3000);
+        }
+        
+        function updateUI() {
+            const canAnyBeExported = localEntries.some(entry => entry.canExport);
+            const totalCount = localEntries.length;
+            entryCounter.textContent = totalCount;
+            
+            exportHtmlBtn.disabled = !canAnyBeExported;
+            exportJsonBtn.disabled = !canAnyBeExported;
+            
+            // Enable/disable the "Todo" checkbox based on whether there are any entries
+            toggleAllExportCheckbox.disabled = totalCount === 0;
+
+            // Set the "Todo" checkbox state
+            if (totalCount === 0) {
+                toggleAllExportCheckbox.checked = false;
+            } else {
+                // If all entries are exportable, check "Todo"; otherwise, uncheck
+                toggleAllExportCheckbox.checked = localEntries.every(entry => entry.canExport);
+            }
+
+            clearDataBtn.disabled = totalCount === 0;
+
+            // Update date sort button text
+            toggleDateSortBtn.textContent = sortByDateEnabled ? 'Ordenar por Fecha (Activo)' : 'Ordenar por Fecha';
+
+            if (totalCount === 0) {
+                entriesList.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                entriesList.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            }
+        }
+        
+        // --- Data Functions ---
+        function loadEntriesFromStorage() {
+            const entriesJson = localStorage.getItem(STORAGE_KEY);
+            localEntries = entriesJson ? JSON.parse(entriesJson) : [];
+            // Ensure `canExport` property exists for old entries
+            localEntries.forEach(entry => {
+                if (typeof entry.canExport === 'undefined') {
+                    entry.canExport = true;
+                }
+            });
+        }
+
+        function saveEntriesToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localEntries));
+        }
+
+        function renderEntries() {
+            const selectedCollection = collectionFilter.value;
+            let filteredEntries = [...localEntries];
+
+            if (selectedCollection !== '') {
+                filteredEntries = localEntries.filter(entry => entry.collection === selectedCollection);
+            }
+
+            let currentSortedEntries = [...filteredEntries];
+
+            if (sortByDateEnabled) {
+                // Sort by publicationYear, then month, then day
+                currentSortedEntries.sort((a, b) => {
+                    // Handle cases where year is missing (place at end)
+                    if (!a.publicationYear && !b.publicationYear) return 0;
+                    if (!a.publicationYear) return 1; // a comes after b
+                    if (!b.publicationYear) return -1; // b comes after a
+
+                    // Compare by year
+                    if (a.publicationYear !== b.publicationYear) {
+                        return a.publicationYear - b.publicationYear;
+                    }
+
+                    // Compare by month (if year is same)
+                    // Treat missing month as 0 for sorting purposes (comes before 1-12)
+                    const monthA = a.month || 0;
+                    const monthB = b.month || 0;
+                    if (monthA !== monthB) {
+                        return monthA - monthB;
+                    }
+
+                    // Compare by day (if year and month are same)
+                    // Treat missing day as 0
+                    const dayA = a.day || 0;
+                    const dayB = b.day || 0;
+                    return dayA - dayB;
+                });
+            } else {
+                // Original sorting by collection, then author
+                currentSortedEntries.sort((a, b) => {
+                    const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
+                    if (collectionCompare !== 0) return collectionCompare;
+                    return (a.author || '').localeCompare(b.author || '');
+                });
+            }
+            
+            entriesList.innerHTML = ''; // Clear previous list
+            if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Only show empty state if no entries at all
+                emptyState.classList.remove('hidden');
+                entriesList.classList.add('hidden');
+            } else if (currentSortedEntries.length === 0 && localEntries.length > 0) { // No entries match filter
+                entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No hay entradas que coincidan con la colección seleccionada.</div>`;
+                emptyState.classList.add('hidden');
+                entriesList.classList.remove('hidden');
+            }
+            else {
+                emptyState.classList.add('hidden');
+                entriesList.classList.remove('hidden');
+            }
+
+            currentSortedEntries.forEach(entry => {
+                const entryElement = document.createElement('div');
+                entryElement.className = 'flex flex-col sm:flex-row items-start gap-4 p-4';
+                
+                const coverUrl = entry.coverUrl || 'https://placehold.co/200x280/e2e8f0/cbd5e0?text=Sin+Tapa';
+
+                entryElement.innerHTML = `
+                    <img src="${coverUrl}" onerror="this.onerror=null;this.src='https://placehold.co/200x280/e2e8f0/cbd5e0?text=Error';" alt="Tapa de ${entry.author || 'Entrada sin autor'}" class="w-24 h-auto object-cover rounded-md shadow-sm flex-shrink-0 mx-auto sm:mx-0">
+                    <div class="flex-grow text-center sm:text-left">
+                        <p class="font-bold text-lg text-gray-800">${entry.author || 'Autor no especificado'}</p>
+                        <p class="text-sm text-gray-500">${entry.collection}</p>
+                        <p class="text-sm text-gray-500">${entry.publicationYear || ''}</p>
+                        <!-- Export checkbox for each entry -->
+                        <div class="mt-2 flex items-center justify-center sm:justify-start">
+                            <input type="checkbox" id="export-${entry.id}" data-id="${entry.id}" class="form-checkbox h-4 w-4 text-blue-600 export-checkbox" ${entry.canExport ? 'checked' : ''}>
+                            <label for="export-${entry.id}" class="ml-2 text-sm text-gray-700">Exportar</label>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0 mx-auto sm:mx-0 mt-4 sm:mt-0">
+                        <button class="btn btn-sm btn-secondary edit-btn" data-id="${entry.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                            <span>Editar</span>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-btn" data-id="${entry.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                            <span>Borrar</span>
+                        </button>
+                    </div>
+                `;
+                entriesList.appendChild(entryElement);
+            });
+            updateUI();
+        }
+
+        function downloadFile(content, fileName, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function generateHtmlForExport(entries) {
+            // Filter entries to include only those marked for export
+            const exportableEntries = entries.filter(entry => entry.canExport);
+
+            // Important: Exported HTML should respect the *current* sorting, if date sort is active.
+            // If date sort is not active, it should use the default collection/author sort.
+            let sortedEntriesForExport = [...exportableEntries];
+            if (sortByDateEnabled) {
+                sortedEntriesForExport.sort((a, b) => {
+                    if (!a.publicationYear && !b.publicationYear) return 0;
+                    if (!a.publicationYear) return 1;
+                    if (!b.publicationYear) return -1;
+                    if (a.publicationYear !== b.publicationYear) {
+                        return a.publicationYear - b.publicationYear;
+                    }
+                    const monthA = a.month || 0;
+                    const monthB = b.month || 0;
+                    if (monthA !== monthB) {
+                        return monthA - monthB;
+                    }
+                    const dayA = a.day || 0;
+                    const dayB = b.day || 0;
+                    return dayA - dayB;
+                });
+            } else {
+                 sortedEntriesForExport.sort((a, b) => {
+                    const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
+                    if (collectionCompare !== 0) return collectionCompare;
+                    return (a.author || '').localeCompare(b.author || '');
+                });
+            }
+
+
+            const getCollectionColor = (collectionName) => {
+                switch (collectionName) {
+                    case "Sociedad en Movimiento":
+                        return "#ffc300";
+                    case "Ciencias":
+                        return "#FF0000";
+                    case "Aulas Universitarias":
+                        return "#006bcd";
+                    default:
+                        return "#D83A39"; // Default color
+                }
+            };
+            
+            const entryBlocks = sortedEntriesForExport.map(entry => {
+                const display = (value, fallback = '') => value || fallback;
+                const priceText = (value) => value ? `Precio pre-compra online con 50% de descuento: $${Number(value).toFixed(2)}.-` : '';
+                const collectionColor = getCollectionColor(entry.collection);
+                
+                let seriesContent = '';
+                // Handle "Serie Historias de Vida"
+                if (entry.collection === "Sociedad en Movimiento" && entry.series === "Serie Historias de Vida") {
+                    seriesContent = `<span style="color: #95cd00; margin-left: 8px;">- ${entry.series}</span>`;
+                }
+                // Handle "Serie Apuntes y Trabajos Prácticos" with color #006bcd
+                else if (entry.collection === "Aulas Universitarias" && entry.series === "Serie Apuntes y Trabajos Prácticos") {
+                    seriesContent = `<span style="color: #006bcd; margin-left: 8px;">- ${entry.series}</span>`;
+                }
+
+                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Colección")
+                    ? `
+                    <div class="collection-header">
+                        <svg width="10" height="10" viewBox="0 0 100 100"><polygon points="0,0 100,50 0,100" fill="${collectionColor}"/></svg>
+                        <span style="color: ${collectionColor};">${'Colección ' + display(entry.collection)}</span>
+                        ${seriesContent}
+                    </div>`
+                    : '<div style="margin-bottom: 1.5rem;"></div>';
+                
+                let workTitleHtml = '';
+                if (entry.workTitle && entry.workTitleVisible) {
+                    workTitleHtml = `<h3 class="work-title">${display(entry.workTitle)}</h3>`;
+                }
+
+                let metadataHtml = '';
+                if (entry.author) {
+                    metadataHtml += `<li><strong>${display(entry.sourceType, 'Autor/es')}:</strong> ${display(entry.author)}</li>`;
+                }
+                if (entry.publicationYear) metadataHtml += `<li><strong>Año de publicación:</strong> ${entry.publicationYear}</li>`;
+                if (entry.pages) metadataHtml += `<li><strong>Páginas:</strong> ${entry.pages}</li>`;
+                if (entry.format) metadataHtml += `<li><strong>Formato:</strong> ${display(entry.format)}</li>`;
+                if (entry.isbn) metadataHtml += `<li><strong>ISBN:</strong> ${display(entry.isbn)}</li>`;
+                if (entry.isbnDigital) metadataHtml += `<li><strong>ISBN Digital:</strong> ${display(entry.isbnDigital)}</li>`;
+
+                let buttonsHtml = '';
+                if (entry.purchaseUrl) {
+                    buttonsHtml += `
+                    <a href="${entry.purchaseUrl}" class="purchase-button" target="_blank" style="background-color: LimeGreen;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        PRE-COMPRA DE LIBROS ONLINE
+                    </a>`;
+                }
+                if (entry.pdfUrl) {
+                    buttonsHtml += `
+                    <a href="${entry.pdfUrl}" class="download-button pdf" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        DESCARGAR PDF GRATIS
+                    </a>`;
+                }
+                if (entry.epubUrl) {
+                    buttonsHtml += `
+                    <a href="${entry.epubUrl}" class="download-button epub" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        DESCARGAR EPUB GRATIS
+                    </a>`;
+                }
+
+                return `
+                <div class="book-entry">
+                    ${collectionHeaderHtml}
+                    <div class="book-content">
+                        <div class="book-cover">
+                            ${entry.coverUrl ? `<img src="${entry.coverUrl}" alt="Portada del libro por ${display(entry.author)}">` : '<div class="cover-placeholder"></div>'}
+                        </div>
+                        <div class="book-details">
+                            ${workTitleHtml}
+                            <h2 class="book-title">${display(entry.author, 'Autor no especificado')}</h2>
+                            <p class="price" style="color: LimeGreen;">${priceText(entry.price)}</p>
+                            <div class="separator" style="background-color: LimeGreen;"></div>
+                            <div class="buttons-container">
+                                ${buttonsHtml}
+                            </div>
+                            <ul class="metadata">
+                                ${metadataHtml}
+                            </ul>
+                        </div>
+                    </div>
+                    ${entry.description ? `
+                    <div class="book-description">
+                        <p>${display(entry.description).replace(/\n/g, '<br>')}</p>
+                    </div>` : ''}
+                </div>
+                `;
+            }).join('');
+
+            return `
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Catálogo Exportado</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #333; margin: 0; padding: 2rem 0; }
+                    .catalog-wrapper {
+                        width: 95%;
+                        margin: 0 auto;
+                    }
+                    .book-entry { max-width: 1500px; margin: 0 auto 3rem auto; border-top: 1px solid #e0e0e0; padding-top: 1.5rem; }
+                    .collection-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; }
+                    .collection-header span { font-weight: 600; font-size: 0.9rem; }
+                    .book-content { display: flex; gap: 2rem; flex-wrap: wrap; }
+                    .book-cover { flex: 1; min-width: 200px; }
+                    .book-cover img { width: 100%; max-width: 400px; height: auto; }
+                    .cover-placeholder { width: 100%; max-width: 400px; height: 375px; background-color: #f0f0f0; border: 1px dashed #ccc; }
+                    .book-details { flex: 2; min-width: 300px; }
+                    .work-title { font-size: 1.5rem; font-style: italic; color: #4b5563; margin-bottom: 0.25rem; }
+                    .book-title { font-size: 1.8rem; font-weight: 700; color: #000; margin: 0 0 0.5rem 0; line-height: 1.2; }
+                    .price { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+                    .separator { width: 50px; height: 3px; margin-bottom: 1.5rem; }
+                    .buttons-container { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+                    .purchase-button, .download-button { display: inline-flex; align-items: center; gap: 10px; color: white; font-weight: 700; text-decoration: none; padding: 0.8rem 1.5rem; border-radius: 5px; transition: opacity 0.2s; }
+                    .purchase-button:hover, .download-button:hover { opacity: 0.85; }
+                    .purchase-button svg, .download-button svg { stroke: white; }
+                    .download-button.pdf { background-color: #1d4ed8; }
+                    .download-button.epub { background-color: #3b82f6; }
+                    .metadata { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; line-height: 1.6; color: #444; }
+                    .metadata li { margin-bottom: 0.3rem; }
+                    .metadata strong { color: #000; }
+                    .book-description { margin-top: 2rem; font-size: 0.95rem; line-height: 1.7; color: #333; }
+                    @media (max-width: 768px) {
+                        .book-content { flex-direction: column; }
+                        .book-cover img, .cover-placeholder { max-width: 200px; }
+                        .book-title { font-size: 1.5rem; }
+                    }
+                    @media (max-width: 495px) {
+                        .book-cover {
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                        .collection-header, .buttons-container {
+                            justify-content: center;
+                        }
+                        .book-details {
+                            text-align: center;
+                        }
+                        .separator {
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="catalog-wrapper">
+                    ${entryBlocks}
+                </div>
+            </body>
+            </html>
+            `;
+        }
+
+        // --- Event Handlers ---
+        function setupEventListeners() {
+            // Open "Add Entry" modal
+            addEntryBtn.addEventListener('click', () => {
+                addEntryForm.reset();
+                // Hide all series wrappers initially
+                document.getElementById('seriesHistoriasDeVidaWrapper').classList.add('hidden');
+                document.getElementById('seriesApuntesYTrabajosPracticosWrapper').classList.add('hidden');
+                document.getElementById('entryEditId').value = '';
+                modalTitle.textContent = 'Añadir Nueva Entrada';
+                saveModalBtn.textContent = 'Guardar Entrada';
+                showModal(addEntryModal);
+            });
+
+            // Cancel "Add/Edit" modal
+            cancelModalBtn.addEventListener('click', () => hideModal(addEntryModal));
+
+            // Show/hide series checkboxes based on collection
+            const collectionSelect = document.getElementById('entryCollection');
+            const seriesHistoriasDeVidaWrapper = document.getElementById('seriesHistoriasDeVidaWrapper');
+            const seriesHistoriasDeVidaCheckbox = document.getElementById('entrySeriesHistoriasDeVida');
+            const seriesApuntesYTrabajosPracticosWrapper = document.getElementById('seriesApuntesYTrabajosPracticosWrapper');
+            const seriesApuntesYTrabajosPracticosCheckbox = document.getElementById('entrySeriesApuntesYTrabajosPracticos');
+            
+            collectionSelect.addEventListener('change', () => {
+                // Reset all series checkboxes and hide their wrappers
+                seriesHistoriasDeVidaWrapper.classList.add('hidden');
+                seriesHistoriasDeVidaCheckbox.checked = false;
+                seriesApuntesYTrabajosPracticosWrapper.classList.add('hidden');
+                seriesApuntesYTrabajosPracticosCheckbox.checked = false;
+
+                if (collectionSelect.value === 'Sociedad en Movimiento') {
+                    seriesHistoriasDeVidaWrapper.classList.remove('hidden');
+                } else if (collectionSelect.value === 'Aulas Universitarias') {
+                    seriesApuntesYTrabajosPracticosWrapper.classList.remove('hidden');
+                }
+            });
+            
+            // Handle Add/Edit form submission
+            addEntryForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveModalBtn.disabled = true;
+
+                const editId = document.getElementById('entryEditId').value;
+
+                const getNumbValue = (id) => {
+                    const val = document.getElementById(id).value;
+                    return val ? Number(val) : null;
+                };
+                
+                let selectedSeries = null;
+                if (document.getElementById('entrySeriesHistoriasDeVida').checked) {
+                    selectedSeries = "Serie Historias de Vida";
+                } else if (document.getElementById('entrySeriesApuntesYTrabajosPracticos').checked) {
+                    selectedSeries = "Serie Apuntes y Trabajos Prácticos";
+                }
+
+                const entryData = {
+                    id: editId || crypto.randomUUID(),
+                    price: getNumbValue('entryPrice'),
+                    collection: document.getElementById('entryCollection').value,
+                    series: selectedSeries, // Use the determined series
+                    month: getNumbValue('entryMonth'), // New: Month field
+                    day: getNumbValue('entryDay'),     // New: Day field
+                    author: document.getElementById('entryAuthor').value.trim(),
+                    sourceType: document.getElementById('entrySourceType').value,
+                    workTitle: document.getElementById('entryWorkTitle').value.trim(),
+                    workTitleVisible: document.querySelector('input[name="workTitleVisibility"]:checked').value === 'visible',
+                    publicationYear: getNumbValue('entryPublishYear'),
+                    pages: getNumbValue('entryPages'),
+                    format: document.getElementById('entryFormat').value.trim(),
+                    coverUrl: document.getElementById('entryCoverUrl').value.trim(),
+                    purchaseUrl: document.getElementById('entryPurchaseUrl').value.trim(),
+                    pdfUrl: document.getElementById('entryPdfUrl').value.trim(),
+                    epubUrl: document.getElementById('entryEpubUrl').value.trim(),
+                    isbn: document.getElementById('entryIsbn').value.trim(),
+                    isbnDigital: document.getElementById('entryIsbnDigital').value.trim(),
+                    description: document.getElementById('entryDescription').value.trim(),
+                    canExport: true, // New entries are exportable by default
+                };
+                
+                if (editId) {
+                    // Update existing entry
+                    const index = localEntries.findIndex(entry => entry.id === editId);
+                    if (index !== -1) {
+                        // Preserve the existing canExport status
+                        localEntries[index] = { ...entryData, canExport: localEntries[index].canExport };
+                    }
+                    showNotification('Entrada actualizada con éxito.');
+                } else {
+                    // Add new entry
+                    localEntries.push(entryData);
+                    showNotification('Entrada añadida con éxito.');
+                }
+                
+                saveEntriesToStorage();
+                renderEntries();
+                hideModal(addEntryModal);
+                saveModalBtn.disabled = false;
+            });
+
+            // Export to HTML
+            exportHtmlBtn.addEventListener('click', () => {
+                // Filter entries to include only those marked for export
+                const exportableEntries = localEntries.filter(entry => entry.canExport);
+                if (exportableEntries.length === 0) {
+                    showNotification('No hay entradas seleccionadas para exportar.', true);
+                    return;
+                }
+                const htmlContent = generateHtmlForExport(exportableEntries);
+                downloadFile(htmlContent, 'catalogo.html', 'text/html');
+                showNotification('Catálogo HTML exportado con éxito.');
+            });
+
+            // Export to JSON
+            exportJsonBtn.addEventListener('click', () => {
+                // Filter entries to include only those marked for export
+                const exportableEntries = localEntries.filter(entry => entry.canExport);
+                if (exportableEntries.length === 0) {
+                    showNotification('No hay entradas seleccionadas para exportar.', true);
+                    return;
+                }
+                const jsonContent = JSON.stringify(exportableEntries, null, 2);
+                downloadFile(jsonContent, 'catalogo.json', 'application/json');
+                showNotification('Catálogo JSON exportado con éxito.');
+            });
+            
+            // Import from JSON
+            importJsonBtn.addEventListener('click', () => importFileEl.click());
+            importFileEl.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    let importedEntries;
+                    try {
+                        importedEntries = JSON.parse(e.target.result);
+                        if (!Array.isArray(importedEntries)) {
+                           throw new Error("El archivo JSON no contiene un array de entradas.");
+                        }
+                    } catch (err) {
+                        showNotification(`Error al leer el archivo: ${err.message}`, true);
+                        return;
+                    }
+                    
+                    confirmModalTitle.textContent = '¿Importar entradas?';
+                    confirmModalText.textContent = `Se encontraron ${importedEntries.length} entradas. Esto borrará todas las entradas actuales. ¿Deseas continuar?`;
+                    confirmBtn.className = 'btn btn-info';
+                    confirmBtn.textContent = 'Sí, importar';
+                    showModal(confirmModal);
+
+                    confirmAction = () => {
+                        localEntries = importedEntries.map(entry => ({...entry, id: entry.id || crypto.randomUUID(), canExport: typeof entry.canExport === 'boolean' ? entry.canExport : true })); // Ensure IDs and canExport property
+                        saveEntriesToStorage();
+                        renderEntries();
+                        showNotification(`Se importaron ${importedEntries.length} entradas con éxito.`);
+                    };
+                };
+                reader.readAsText(file);
+                importFileEl.value = ''; // Reset file input
+            });
+
+            // Show confirmation for "Clear All"
+            clearDataBtn.addEventListener('click', () => {
+                if (localEntries.length > 0) {
+                    confirmModalTitle.textContent = '¿Limpiar todo?';
+                    confirmModalText.textContent = 'Esta acción eliminará PERMANENTEMENTE todas las entradas. No se puede deshacer.';
+                    confirmBtn.className = 'btn btn-danger'; // Reset class
+                    confirmBtn.textContent = 'Sí, limpiar todo';
+                    showModal(confirmModal);
+                    confirmAction = () => {
+                        localEntries = [];
+                        saveEntriesToStorage();
+                        renderEntries();
+                        showNotification('Todas las entradas han sido eliminadas.', false);
+                    };
+                }
+            });
+
+            // Handle clicks on Edit/Delete buttons and export checkboxes using event delegation
+            entriesList.addEventListener('click', e => {
+                const target = e.target.closest('button, input[type="checkbox"]');
+                if (!target) return;
+
+                const id = target.dataset.id;
+                if (target.classList.contains('edit-btn')) {
+                    handleEdit(id);
+                } else if (target.classList.contains('delete-btn')) {
+                    handleDelete(id);
+                } else if (target.classList.contains('export-checkbox')) {
+                    handleExportCheckboxChange(id, target.checked);
+                }
+            });
+
+            // Handle "Todo" checkbox change
+            toggleAllExportCheckbox.addEventListener('change', (event) => {
+                const shouldCheckAll = event.target.checked;
+                localEntries.forEach(entry => {
+                    entry.canExport = shouldCheckAll;
+                });
+                saveEntriesToStorage();
+                renderEntries(); // Re-render to update all individual checkboxes
+                showNotification(shouldCheckAll ? 'Todas las entradas seleccionadas para exportar.' : 'Todas las entradas deseleccionadas para exportar.');
+            });
+
+            // Handle collection filter change - now also toggles export status for that collection
+            collectionFilter.addEventListener('change', () => {
+                const selectedCollection = collectionFilter.value;
+
+                if (selectedCollection !== '') {
+                    // Filter entries belonging to the selected collection
+                    const entriesInSelectedCollection = localEntries.filter(entry => entry.collection === selectedCollection);
+                    
+                    // Determine if all entries in this specific collection are currently exportable
+                    const areAllExportableInSelectedCollection = entriesInSelectedCollection.length > 0 && entriesInSelectedCollection.every(entry => entry.canExport);
+                    
+                    // Set the target export state (toggle)
+                    const targetExportState = !areAllExportableInSelectedCollection;
+
+                    let entriesModifiedCount = 0;
+                    localEntries.forEach(entry => {
+                        if (entry.collection === selectedCollection && entry.canExport !== targetExportState) {
+                            entry.canExport = targetExportState;
+                            entriesModifiedCount++;
+                        }
+                    }
+                    );
+
+                    saveEntriesToStorage(); // Save the updated canExport states
+                    if (entriesModifiedCount > 0) {
+                         showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
+                    } else if (entriesInSelectedCollection.length > 0) {
+                        showNotification(`Las entradas de "${selectedCollection}" ya estaban en el estado deseado.`);
+                    } else {
+                        showNotification(`No hay entradas en "${selectedCollection}" para modificar.`);
+                    }
+                }
+                
+                renderEntries(); // Re-render entries based on the selected filter (and updated export states)
+            });
+
+            // New: Handle toggle date sort button click
+            toggleDateSortBtn.addEventListener('click', () => {
+                sortByDateEnabled = !sortByDateEnabled;
+                renderEntries(); // Re-render with new sorting preference
+                showNotification(sortByDateEnabled ? 'Ordenado por fecha exacta (Año, Mes, Día).' : 'Ordenado por colección y autor.');
+            });
+
+            function handleExportCheckboxChange(id, isChecked) {
+                const entryIndex = localEntries.findIndex(entry => entry.id === id);
+                if (entryIndex !== -1) {
+                    localEntries[entryIndex].canExport = isChecked;
+                    saveEntriesToStorage();
+                    updateUI(); // Update button states based on new export selection
+                }
+            }
+
+            function handleEdit(id) {
+                const entryToEdit = localEntries.find(entry => entry.id === id);
+                if (!entryToEdit) return;
+                
+                const collectionSelect = document.getElementById('entryCollection');
+                const seriesHistoriasDeVidaWrapper = document.getElementById('seriesHistoriasDeVidaWrapper');
+                const seriesHistoriasDeVidaCheckbox = document.getElementById('entrySeriesHistoriasDeVida');
+                const seriesApuntesYTrabajosPracticosWrapper = document.getElementById('seriesApuntesYTrabajosPracticosWrapper');
+                const seriesApuntesYTrabajosPracticosCheckbox = document.getElementById('entrySeriesApuntesYTrabajosPracticos');
+
+
+                // Populate form
+                document.getElementById('entryEditId').value = id;
+                document.getElementById('entryPrice').value = entryToEdit.price || '';
+                collectionSelect.value = entryToEdit.collection || '';
+                document.getElementById('entryMonth').value = entryToEdit.month || ''; // Populate month
+                document.getElementById('entryDay').value = entryToEdit.day || '';     // Populate day
+                document.getElementById('entryPublishYear').value = entryToEdit.publicationYear || '';
+                document.getElementById('entryAuthor').value = entryToEdit.author || '';
+                document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Autor';
+                document.getElementById('entryWorkTitle').value = entryToEdit.workTitle || '';
+                if(entryToEdit.workTitleVisible) {
+                    document.querySelector('input[name="workTitleVisibility"][value="visible"]').checked = true;
+                } else {
+                    document.querySelector('input[name="workTitleVisibility"][value="hidden"]').checked = true;
+                }
+                document.getElementById('entryPages').value = entryToEdit.pages || '';
+                document.getElementById('entryFormat').value = entryToEdit.format || '';
+                document.getElementById('entryCoverUrl').value = entryToEdit.coverUrl || '';
+                document.getElementById('entryPurchaseUrl').value = entryToEdit.purchaseUrl || '';
+                document.getElementById('entryPdfUrl').value = entryToEdit.pdfUrl || '';
+                document.getElementById('entryEpubUrl').value = entryToEdit.epubUrl || '';
+                document.getElementById('entryIsbn').value = entryToEdit.isbn || '';
+                document.getElementById('entryIsbnDigital').value = entryToEdit.isbnDigital || '';
+                document.getElementById('entryDescription').value = entryToEdit.description || '';
+
+                // Reset and then show/hide and set series checkboxes
+                seriesHistoriasDeVidaWrapper.classList.add('hidden');
+                seriesHistoriasDeVidaCheckbox.checked = false;
+                seriesApuntesYTrabajosPracticosWrapper.classList.add('hidden');
+                seriesApuntesYTrabajosPracticosCheckbox.checked = false;
+
+                if (collectionSelect.value === 'Sociedad en Movimiento') {
+                    seriesHistoriasDeVidaWrapper.classList.remove('hidden');
+                    seriesHistoriasDeVidaCheckbox.checked = (entryToEdit.series === "Serie Historias de Vida");
+                } else if (collectionSelect.value === 'Aulas Universitarias') {
+                    seriesApuntesYTrabajosPracticosWrapper.classList.remove('hidden');
+                    seriesApuntesYTrabajosPracticosCheckbox.checked = (entryToEdit.series === "Serie Apuntes y Trabajos Prácticos");
+                }
+                
+                // Update modal UI
+                modalTitle.textContent = 'Editar Entrada';
+                saveModalBtn.textContent = 'Guardar Cambios';
+                showModal(addEntryModal);
+            }
+
+            function handleDelete(id) {
+                confirmModalTitle.textContent = '¿Eliminar esta entrada?';
+                confirmModalText.textContent = 'Esta acción no se puede deshacer.';
+                confirmBtn.className = 'btn btn-danger';
+                confirmBtn.textContent = 'Sí, eliminar';
+                showModal(confirmModal);
+                confirmAction = () => {
+                    localEntries = localEntries.filter(entry => entry.id !== id);
+                    saveEntriesToStorage();
+                    renderEntries();
+                    showNotification('Entrada eliminada.');
+                };
+            }
+
+            // Confirmation modal logic
+            cancelConfirmBtn.addEventListener('click', () => {
+                hideModal(confirmModal);
+                confirmAction = null;
+            });
+
+            confirmBtn.addEventListener('click', () => {
+                if (typeof confirmAction === 'function') {
+                    confirmBtn.disabled = true;
+                    try {
+                        confirmAction();
+                    } catch (error) {
+                        console.error("Confirmation action failed:", error);
+                        showNotification("La operación falló.", true);
+                    } finally {
+                        hideModal(confirmModal);
+                        confirmBtn.disabled = false;
+                        confirmAction = null;
+                    }
+                }
+            });
+        }
+        
+        // --- App Initialization ---
+        function startApp() {
+            document.getElementById('year').textContent = new Date().getFullYear();
+            loadEntriesFromStorage();
+            renderEntries(); // Initial render with all entries
+            setupEventListeners();
+            console.log("Aplicación de recolección de entradas iniciada con LocalStorage.");
+        }
+        
+        startApp();
+    </script>
+</body>
+</html>
