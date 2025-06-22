@@ -91,6 +91,8 @@
                     <option value="Aulas Universitarias">Aulas Universitarias</option>
                     <option value="Sin Colección">Sin Colección</option>
                 </select>
+                <!-- Search Input -->
+                <input type="text" id="searchInput" class="form-input w-48 sm:w-64" placeholder="Buscar por Autor o Título">
                 <button id="addEntryBtn" class="btn btn-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                     <span>Añadir Entrada</span>
@@ -321,6 +323,7 @@
         const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // Date Sort Button
         const sortText = document.getElementById('sortText'); // Text for sort button
         const sortIcon = document.getElementById('sortIcon'); // Icon container for sort button
+        const searchInput = document.getElementById('searchInput'); // New: Search input
 
         const addEntryModal = document.getElementById('addEntryModal');
         const addEntryForm = document.getElementById('addEntryForm');
@@ -441,10 +444,22 @@
          */
         function renderEntries() {
             const selectedCollection = collectionFilter.value;
+            const searchTerm = searchInput.value.toLowerCase(); // Get search term and convert to lowercase
+
             let filteredEntries = [...localEntries];
 
+            // Apply search filter first
+            if (searchTerm !== '') {
+                filteredEntries = filteredEntries.filter(entry => {
+                    const authorMatch = (entry.author || '').toLowerCase().includes(searchTerm);
+                    const workTitleMatch = (entry.workTitle || '').toLowerCase().includes(searchTerm);
+                    return authorMatch || workTitleMatch;
+                });
+            }
+
+            // Apply collection filter
             if (selectedCollection !== '') {
-                filteredEntries = localEntries.filter(entry => entry.collection === selectedCollection);
+                filteredEntries = filteredEntries.filter(entry => entry.collection === selectedCollection);
             }
 
             let currentSortedEntries = [...filteredEntries];
@@ -499,12 +514,12 @@
             
             entriesList.innerHTML = ''; // Clear previous list
             if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Only show empty state if no entries at all
-                emptyState.classList.add('hidden'); // Ensure hidden state when no entries
-                entriesList.classList.add('hidden'); // Ensure hidden state when no entries
+                emptyState.classList.remove('hidden'); // Show empty state
+                entriesList.classList.add('hidden'); // Hide entries list
             } else if (currentSortedEntries.length === 0 && localEntries.length > 0) { // No entries match filter
-                entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No hay entradas que coincidan con la colección seleccionada.</div>`;
-                emptyState.classList.add('hidden');
-                entriesList.classList.remove('hidden');
+                entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No hay entradas que coincidan con los filtros o la búsqueda seleccionada.</div>`;
+                emptyState.classList.add('hidden'); // Hide empty state
+                entriesList.classList.remove('hidden'); // Show entries list (with message)
             }
             else {
                 emptyState.classList.add('hidden');
@@ -640,7 +655,7 @@
             };
 
             // Conditional style for book-title based on forceWorkTitleVisible
-            const bookTitleFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
+            const bookAuthorFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
             
             const entryBlocks = entriesToRender.map(entry => {
                 const display = (value, fallback = '') => value || fallback;
@@ -713,7 +728,7 @@
                         </div>
                         <div class="book-details">
                             ${workTitleHtml}
-                            <h2 class="book-title" style="font-size: ${bookTitleFontSize};">${display(entry.author, 'Autor no especificado')}</h2>
+                            <h2 class="book-title" style="font-size: ${bookAuthorFontSize};">${display(entry.author, 'Autor no especificado')}</h2>
                             <p class="price" style="color: LimeGreen;">${priceText(entry.price)}</p>
                             <div class="separator" style="background-color: LimeGreen;"></div>
                             <div class="buttons-container">
@@ -1029,38 +1044,14 @@
 
             // Handle collection filter change - now also toggles export status for that collection
             collectionFilter.addEventListener('change', () => {
-                const selectedCollection = collectionFilter.value;
+                // When collection filter changes, re-render entries to apply both collection and search filters
+                renderEntries(); 
+            });
 
-                if (selectedCollection !== '') {
-                    // Filter entries belonging to the selected collection
-                    const entriesInSelectedCollection = localEntries.filter(entry => entry.collection === selectedCollection);
-                    
-                    // Determine if all entries in this specific collection are currently exportable
-                    const areAllExportableInSelectedCollection = entriesInSelectedCollection.length > 0 && entriesInSelectedCollection.every(entry => entry.canExport);
-                    
-                    // Set the target export state (toggle)
-                    const targetExportState = !areAllExportableInSelectedCollection;
-
-                    let entriesModifiedCount = 0;
-                    localEntries.forEach(entry => {
-                        if (entry.collection === selectedCollection && entry.canExport !== targetExportState) {
-                            entry.canExport = targetExportState;
-                            entriesModifiedCount++;
-                        }
-                    }
-                    );
-
-                    saveEntriesToStorage(); // Save the updated canExport states
-                    if (entriesModifiedCount > 0) {
-                            showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
-                    } else if (entriesInSelectedCollection.length > 0) {
-                        showNotification(`Las entradas de "${selectedCollection}" ya estaban en el estado deseado.`);
-                    } else {
-                        showNotification(`No hay entradas en "${selectedCollection}" para modificar.`);
-                    }
-                }
-                
-                renderEntries(); // Re-render entries based on the selected filter (and updated export states)
+            // New: Handle search input changes
+            searchInput.addEventListener('input', () => {
+                // When search input changes, re-render entries to apply both collection and search filters
+                renderEntries();
             });
 
             // Handle toggle date sort button click
