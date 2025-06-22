@@ -116,8 +116,16 @@
                             <label for="toggleAllExportCheckbox" class="ml-2 text-sm text-gray-700">Todo</label>
                         </div>
 
-                        <!-- Button for toggling date sorting -->
-                        <button id="toggleDateSortBtn" class="btn btn-secondary btn-sm">Ordenar por Fecha</button>
+                        <!-- Button for toggling date sorting (now with icons) -->
+                        <button id="toggleDateSortBtn" class="btn btn-secondary btn-sm">
+                            <span id="sortText">Ordenar por Fecha</span>
+                            <span id="sortIcon">
+                                <!-- Default icon (no sort) -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                            </span>
+                        </button>
 
                         <button id="clearDataBtn" class="btn btn-danger btn-sm" disabled>Limpiar Todo</button>
                     </div>
@@ -307,7 +315,9 @@
         const clearDataBtn = document.getElementById('clearDataBtn');
         const toggleAllExportCheckbox = document.getElementById('toggleAllExportCheckbox');
         const collectionFilter = document.getElementById('collectionFilter');
-        const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // New: Date Sort Button
+        const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // Date Sort Button
+        const sortText = document.getElementById('sortText'); // Text for sort button
+        const sortIcon = document.getElementById('sortIcon'); // Icon container for sort button
 
         const addEntryModal = document.getElementById('addEntryModal');
         const addEntryForm = document.getElementById('addEntryForm');
@@ -325,7 +335,8 @@
         let localEntries = [];
         let confirmAction = null;
         const STORAGE_KEY = 'catalogEntries';
-        let sortByDateEnabled = false; // New: State for date sorting
+        // sortByDateDirection: 0 = No sort, 1 = Ascending, -1 = Descending
+        let sortByDateDirection = 0; // New: State for date sorting direction
 
         // --- UI Functions ---
         function showModal(modalElement) { modalElement.classList.add('visible'); }
@@ -369,8 +380,28 @@
 
             clearDataBtn.disabled = totalCount === 0;
 
-            // Update date sort button text
-            toggleDateSortBtn.textContent = sortByDateEnabled ? 'Ordenar por Fecha (Activo)' : 'Ordenar por Fecha';
+            // Update date sort button text and icon
+            let sortIconSvg = '';
+            let sortButtonText = 'Ordenar por Fecha';
+
+            if (sortByDateDirection === 1) { // Ascending
+                sortButtonText = 'Ordenar por Fecha (Asc)';
+                sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l4-4m0 0l4 4m-4-4v18" />
+                              </svg>`;
+            } else if (sortByDateDirection === -1) { // Descending
+                sortButtonText = 'Ordenar por Fecha (Desc)';
+                sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
+                              </svg>`;
+            } else { // No sort
+                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>`;
+            }
+            sortText.textContent = sortButtonText;
+            sortIcon.innerHTML = sortIconSvg;
+
 
             if (totalCount === 0) {
                 entriesList.classList.add('hidden');
@@ -407,32 +438,27 @@
 
             let currentSortedEntries = [...filteredEntries];
 
-            if (sortByDateEnabled) {
-                // Sort by publicationYear, then month, then day
+            if (sortByDateDirection !== 0) { // If date sorting is enabled
                 currentSortedEntries.sort((a, b) => {
-                    // Handle cases where year is missing (place at end)
-                    if (!a.publicationYear && !b.publicationYear) return 0;
-                    if (!a.publicationYear) return 1; // a comes after b
-                    if (!b.publicationYear) return -1; // b comes after a
+                    // Convert year, month, day to a comparable format (e.g., YYYYMMDD)
+                    // Treat missing values as 0 for consistent sorting, but handle undefined years carefully
+                    const getDateValue = (entry) => {
+                        const year = entry.publicationYear || 0;
+                        const month = entry.month || 0;
+                        const day = entry.day || 0;
+                        return year * 10000 + month * 100 + day; // YYYYMMDD numeric representation
+                    };
 
-                    // Compare by year
-                    if (a.publicationYear !== b.publicationYear) {
-                        return a.publicationYear - b.publicationYear;
-                    }
+                    const dateA = getDateValue(a);
+                    const dateB = getDateValue(b);
 
-                    // Compare by month (if year is same)
-                    // Treat missing month as 0 for sorting purposes (comes before 1-12)
-                    const monthA = a.month || 0;
-                    const monthB = b.month || 0;
-                    if (monthA !== monthB) {
-                        return monthA - monthB;
-                    }
+                    // Handle cases where a year might be 0 (meaning undefined), sorting them at the end
+                    if (a.publicationYear === null && b.publicationYear === null) return 0;
+                    if (a.publicationYear === null) return 1; // a comes after b
+                    if (b.publicationYear === null) return -1; // b comes after a
 
-                    // Compare by day (if year and month are same)
-                    // Treat missing day as 0
-                    const dayA = a.day || 0;
-                    const dayB = b.day || 0;
-                    return dayA - dayB;
+                    // Apply ascending or descending based on sortByDateDirection
+                    return sortByDateDirection * (dateA - dateB);
                 });
             } else {
                 // Original sorting by collection, then author
@@ -510,22 +536,23 @@
             // Important: Exported HTML should respect the *current* sorting, if date sort is active.
             // If date sort is not active, it should use the default collection/author sort.
             let sortedEntriesForExport = [...exportableEntries];
-            if (sortByDateEnabled) {
+            if (sortByDateDirection !== 0) {
                 sortedEntriesForExport.sort((a, b) => {
-                    if (!a.publicationYear && !b.publicationYear) return 0;
-                    if (!a.publicationYear) return 1;
-                    if (!b.publicationYear) return -1;
-                    if (a.publicationYear !== b.publicationYear) {
-                        return a.publicationYear - b.publicationYear;
-                    }
-                    const monthA = a.month || 0;
-                    const monthB = b.month || 0;
-                    if (monthA !== monthB) {
-                        return monthA - monthB;
-                    }
-                    const dayA = a.day || 0;
-                    const dayB = b.day || 0;
-                    return dayA - dayB;
+                    const getDateValue = (entry) => {
+                        const year = entry.publicationYear || 0;
+                        const month = entry.month || 0;
+                        const day = entry.day || 0;
+                        return year * 10000 + month * 100 + day;
+                    };
+
+                    const dateA = getDateValue(a);
+                    const dateB = getDateValue(b);
+
+                    if (a.publicationYear === null && b.publicationYear === null) return 0;
+                    if (a.publicationYear === null) return 1;
+                    if (b.publicationYear === null) return -1;
+                    
+                    return sortByDateDirection * (dateA - dateB);
                 });
             } else {
                  sortedEntriesForExport.sort((a, b) => {
@@ -534,8 +561,7 @@
                     return (a.author || '').localeCompare(b.author || '');
                 });
             }
-
-
+            
             const getCollectionColor = (collectionName) => {
                 switch (collectionName) {
                     case "Sociedad en Movimiento":
@@ -772,7 +798,7 @@
                     collection: document.getElementById('entryCollection').value,
                     series: selectedSeries, // Use the determined series
                     month: getNumbValue('entryMonth'), // New: Month field
-                    day: getNumbValue('entryDay'),     // New: Day field
+                    day: getNumbValue('entryDay'),       // New: Day field
                     author: document.getElementById('entryAuthor').value.trim(),
                     sourceType: document.getElementById('entrySourceType').value,
                     workTitle: document.getElementById('entryWorkTitle').value.trim(),
@@ -940,7 +966,7 @@
 
                     saveEntriesToStorage(); // Save the updated canExport states
                     if (entriesModifiedCount > 0) {
-                         showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
+                           showNotification(`Se ${targetExportState ? 'marcaron' : 'desmarcaron'} ${entriesModifiedCount} entradas de "${selectedCollection}" para exportar.`);
                     } else if (entriesInSelectedCollection.length > 0) {
                         showNotification(`Las entradas de "${selectedCollection}" ya estaban en el estado deseado.`);
                     } else {
@@ -951,11 +977,17 @@
                 renderEntries(); // Re-render entries based on the selected filter (and updated export states)
             });
 
-            // New: Handle toggle date sort button click
+            // Handle toggle date sort button click
             toggleDateSortBtn.addEventListener('click', () => {
-                sortByDateEnabled = !sortByDateEnabled;
+                sortByDateDirection = (sortByDateDirection + 2) % 3 - 1; // Cycles through 0, 1, -1
                 renderEntries(); // Re-render with new sorting preference
-                showNotification(sortByDateEnabled ? 'Ordenado por fecha exacta (Año, Mes, Día).' : 'Ordenado por colección y autor.');
+                if (sortByDateDirection === 1) {
+                    showNotification('Ordenado por fecha exacta (Año, Mes, Día) de forma ascendente.');
+                } else if (sortByDateDirection === -1) {
+                    showNotification('Ordenado por fecha exacta (Año, Mes, Día) de forma descendente.');
+                } else {
+                    showNotification('Ordenado por colección y autor.');
+                }
             });
 
             function handleExportCheckboxChange(id, isChecked) {
@@ -983,7 +1015,7 @@
                 document.getElementById('entryPrice').value = entryToEdit.price || '';
                 collectionSelect.value = entryToEdit.collection || '';
                 document.getElementById('entryMonth').value = entryToEdit.month || ''; // Populate month
-                document.getElementById('entryDay').value = entryToEdit.day || '';     // Populate day
+                document.getElementById('entryDay').value = entryToEdit.day || '';       // Populate day
                 document.getElementById('entryPublishYear').value = entryToEdit.publicationYear || '';
                 document.getElementById('entryAuthor').value = entryToEdit.author || '';
                 document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Autor';
