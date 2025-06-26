@@ -881,7 +881,7 @@
                 }
 
 
-                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Coleción")
+                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Colección")
                     ? `
                     <div class="collection-header">
                         <svg width="10" height="10" viewBox="0 0 100 100"><polygon points="0,0 100,50 0,100" fill="${collectionColor}"/></svg>
@@ -889,7 +889,7 @@
                         ${seriesContent}
                         ${coeditorialesContent}
                     </div>`
-                    : '<div style="margin-bottom: 1.5rem;"></div>';
+                    : ''; // Modificado para devolver una cadena vacía si es "Sin Colección"
                 
                 let workTitleHtml = '';
                 if (entry.workTitle && entry.workTitleVisible) { // Comprobar workTitleVisible
