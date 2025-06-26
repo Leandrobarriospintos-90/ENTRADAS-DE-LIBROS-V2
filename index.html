@@ -631,11 +631,10 @@
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
 
-                    // Manejar casos donde un año podría ser 0 (lo que significa indefinido), ordenándolos al final
                     if (a.publicationYear === null && b.publicationYear === null) return 0;
-                    if (a.publicationYear === null) return 1; // a va después de b
-                    if (b.publicationYear === null) return -1; // b va después de a
-
+                    if (a.publicationYear === null) return 1;
+                    if (b.publicationYear === null) return -1;
+                    
                     return dateB - dateA; // Por defecto a orden descendente por fecha dentro de la colección
                 });
             }
@@ -746,6 +745,7 @@
                 <div class="cover-page" style="page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; padding: 2rem;">
                     ${logoHtml}
                     <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #313332;">${settings.title || 'Título de la Portada'}</h1>
+                    <div style="width: 20%; height: 1px; background-color: #ccc; margin: 1em auto;"></div> <!-- Línea gris -->
                     ${collectionsHtml}
                 </div>
             `;
@@ -881,7 +881,7 @@
                 }
 
 
-                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Colección")
+                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Coleción")
                     ? `
                     <div class="collection-header">
                         <svg width="10" height="10" viewBox="0 0 100 100"><polygon points="0,0 100,50 0,100" fill="${collectionColor}"/></svg>
