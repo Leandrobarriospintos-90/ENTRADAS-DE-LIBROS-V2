@@ -119,6 +119,24 @@
                         <label for="coverPageLogoUrl" class="block text-sm font-medium text-gray-700 mb-1">URL del Logo (Opcional)</label>
                         <input type="url" id="coverPageLogoUrl" class="form-input" placeholder="https://ejemplo.com/logo.png">
                     </div>
+                    <!-- Nuevas opciones para colecciones en portada - Ordenadas Alfabéticamente -->
+                    <div>
+                        <span class="block text-sm font-medium text-gray-700 mb-1">Colecciones en Portada:</span>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="includeAulas" class="form-checkbox h-4 w-4 text-blue-600">
+                                <span class="ml-2 text-sm">Colección Aulas Universitarias</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="includeCiencias" class="form-checkbox h-4 w-4 text-blue-600">
+                                <span class="ml-2 text-sm">Colección Ciencias</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="includeSociedad" class="form-checkbox h-4 w-4 text-blue-600">
+                                <span class="ml-2 text-sm">Colección Sociedad en Movimiento</span>
+                            </label>
+                        </div>
+                    </div>
                     <button id="saveCoverPageBtn" class="btn btn-primary btn-sm">Guardar Configuración de Portada</button>
                 </div>
             </div>
@@ -210,7 +228,7 @@
                     <div id="seriesApuntesYTrabajosPracticosWrapper" class="hidden pl-2">
                         <label class="flex items-center space-x-3">
                             <input type="checkbox" id="entrySeriesApuntesYTrabajosPracticos" name="series" class="form-checkbox h-5 w-5 text-blue-600 rounded">
-                            <span class="text-sm font-medium text-gray-700">Serie Apuntes y Trabajos Prácticos</span>
+                            <span class="ml-2 text-sm">Serie Apuntes y Trabajos Prácticos</span>
                         </label>
                     </div>
                     <!-- Nuevos campos para Mes y Día -->
@@ -346,7 +364,7 @@
         const addEntryBtn = document.getElementById('addEntryBtn');
         const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const exportJsonBtn = document.getElementById('exportJsonBtn');
-        const exportHtmlWithTitleBtn = document.getElementById('exportHtmlWithTitleBtn'); // Nuevo: Botón para exportar HTML con título de obra forzado
+        const exportHtmlWithTitleBtn = document.getElementById('exportHtmlWithTitleBtn'); // Botón para exportar HTML con título de obra forzado
         const importJsonBtn = document.getElementById('importJsonBtn');
         const importFileEl = document.getElementById('importFile');
         const clearDataBtn = document.getElementById('clearDataBtn');
@@ -355,7 +373,7 @@
         const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // Botón de ordenación por fecha
         const sortText = document.getElementById('sortText'); // Texto para el botón de ordenación
         const sortIcon = document.getElementById('sortIcon'); // Contenedor de iconos para el botón de ordenación
-        const searchInput = document.getElementById('searchInput'); // Nuevo: Campo de búsqueda
+        const searchInput = document.getElementById('searchInput'); // Campo de búsqueda
 
         const addEntryModal = document.getElementById('addEntryModal');
         const addEntryForm = document.getElementById('addEntryForm');
@@ -378,6 +396,9 @@
         const coverPageTitleInput = document.getElementById('coverPageTitle');
         const coverPageLogoUrlInput = document.getElementById('coverPageLogoUrl');
         const saveCoverPageBtn = document.getElementById('saveCoverPageBtn');
+        const includeCienciasCheckbox = document.getElementById('includeCiencias'); // Nuevo checkbox
+        const includeAulasCheckbox = document.getElementById('includeAulas'); // Nuevo checkbox
+        const includeSociedadCheckbox = document.getElementById('includeSociedad'); // Nuevo checkbox
         
         const confirmModal = document.getElementById('confirmModal');
         const confirmModalTitle = document.getElementById('confirmModalTitle');
@@ -387,10 +408,18 @@
 
         // --- Almacén de datos local ---
         let localEntries = [];
-        let coverPageSettings = { isActive: false, title: '', logoUrl: '' }; // Datos de la portada
+        // Datos de la portada, con nuevas propiedades para las colecciones
+        let coverPageSettings = {
+            isActive: false,
+            title: '',
+            logoUrl: '',
+            includeCiencias: false,
+            includeAulas: false,
+            includeSociedad: false
+        };
         let confirmAction = null;
         const STORAGE_KEY = 'catalogEntries';
-        const STORAGE_KEY_COVER_PAGE = 'catalogCoverPageSettings'; // Nueva clave para la configuración de la portada
+        const STORAGE_KEY_COVER_PAGE = 'catalogCoverPageSettings'; // Clave para la configuración de la portada
         // sortByDateDirection: 0 = Sin ordenar, 1 = Ascendente, -1 = Descendente
         let sortByDateDirection = 0; // Estado para la dirección de ordenación por fecha
 
@@ -497,14 +526,20 @@
         function loadCoverPageSettings() {
             const settingsJson = localStorage.getItem(STORAGE_KEY_COVER_PAGE);
             if (settingsJson) {
-                coverPageSettings = JSON.parse(settingsJson);
+                const loadedSettings = JSON.parse(settingsJson);
+                // Combinar con las propiedades predeterminadas para asegurar que las nuevas existan
+                coverPageSettings = { ...coverPageSettings, ...loadedSettings };
             } else {
-                coverPageSettings = { isActive: false, title: '', logoUrl: '' };
+                coverPageSettings = { isActive: false, title: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false };
             }
             // Actualizar UI
             enableCoverPageCheckbox.checked = coverPageSettings.isActive;
             coverPageTitleInput.value = coverPageSettings.title;
             coverPageLogoUrlInput.value = coverPageSettings.logoUrl;
+            includeCienciasCheckbox.checked = coverPageSettings.includeCiencias;
+            includeAulasCheckbox.checked = coverPageSettings.includeAulas;
+            includeSociedadCheckbox.checked = coverPageSettings.includeSociedad;
+
             if (coverPageSettings.isActive) {
                 coverPageFieldsDiv.classList.remove('hidden');
             } else {
@@ -656,8 +691,31 @@
         }
 
         /**
+         * Función auxiliar para obtener el color de una colección.
+         * Mantiene la consistencia de colores en la aplicación y la exportación.
+         * @param {string} collectionName - Nombre de la colección.
+         * @returns {string} Código de color hexadecimal.
+         */
+        function getCollectionColor(collectionName) {
+            switch (collectionName) {
+                case "Sociedad en Movimiento":
+                    return "#ffc300";
+                case "Ciencias":
+                    return "#FF0000";
+                case "Aulas Universitarias":
+                    return "#006bcd";
+                case "Coedición":
+                    return "#708090"; // Color gris para Coedición
+                case "Sin Colección":
+                    return "#A9A9A9"; // Gris oscuro para Sin Colección
+                default:
+                    return "#D83A39"; // Color predeterminado
+            }
+        }
+
+        /**
          * Genera la cadena HTML para la portada.
-         * @param {Object} settings - Configuración de la portada (isActive, title, logoUrl).
+         * @param {Object} settings - Configuración de la portada (isActive, title, logoUrl, includeCiencias, includeAulas, includeSociedad).
          * @returns {string} El HTML de la portada o cadena vacía si no está activa.
          */
         function generateCoverPageHtml(settings) {
@@ -665,10 +723,30 @@
 
             const logoHtml = settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo de la Portada" class="cover-logo" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e2e8f0/cbd5e0?text=Logo+Error';">` : '';
 
+            let selectedCollections = [];
+            if (settings.includeAulas) {
+                selectedCollections.push("Colección Aulas Universitarias");
+            }
+            if (settings.includeCiencias) {
+                selectedCollections.push("Colección Ciencias");
+            }
+            if (settings.includeSociedad) {
+                selectedCollections.push("Colección Sociedad en Movimiento");
+            }
+
+            // Ordenar alfabéticamente las colecciones seleccionadas
+            selectedCollections.sort((a, b) => a.localeCompare(b));
+
+            let collectionsHtml = selectedCollections.map(colName => {
+                const rawColName = colName.replace('Colección ', ''); // Quitar "Colección " para obtener el nombre original de la colección
+                return `<p style="color: ${getCollectionColor(rawColName)}; font-size: 1.5em; font-weight: 600; margin-top: 0.5em;">${colName}</p>`;
+            }).join('');
+
             return `
                 <div class="cover-page" style="page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; padding: 2rem;">
                     ${logoHtml}
-                    <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #333;">${settings.title || 'Título de la Portada'}</h1>
+                    <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #313332;">${settings.title || 'Título de la Portada'}</h1>
+                    ${collectionsHtml}
                 </div>
             `;
         }
@@ -769,23 +847,6 @@
                 });
             }
             
-            const getCollectionColor = (collectionName) => {
-                switch (collectionName) {
-                    case "Sociedad en Movimiento":
-                        return "#ffc300";
-                    case "Ciencias":
-                        return "#FF0000";
-                    case "Aulas Universitarias":
-                        return "#006bcd";
-                    case "Coedición":
-                        return "#708090"; // Color gris para Coedición
-                    case "Sin Colección": // Color para "Sin Colección"
-                        return "#A9A9A9"; // Gris oscuro, puedes ajustar si prefieres otro tono
-                    default:
-                        return "#D83A39"; // Color predeterminado
-                }
-            };
-
             // Estilo condicional para el título del libro (autor) basado en forceWorkTitleVisible
             const bookAuthorFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
             
@@ -961,7 +1022,7 @@
                     .cover-title {
                         font-size: 3em;
                         font-weight: 700;
-                        color: #2563eb; /* Color azul de Tailwind primary */
+                        color: #313332; /* Color gris oscuro */
                         margin-top: 1em;
                         line-height: 1.2;
                     }
@@ -1198,7 +1259,7 @@
                         localEntries = [];
                         saveEntriesToStorage();
                         // También limpiar la configuración de la portada
-                        coverPageSettings = { isActive: false, title: '', logoUrl: '' };
+                        coverPageSettings = { isActive: false, title: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false };
                         saveCoverPageSettings(); 
                         loadCoverPageSettings(); // Recargar la UI de la portada
                         renderEntries();
@@ -1381,6 +1442,23 @@
             saveCoverPageBtn.addEventListener('click', () => {
                 coverPageSettings.title = coverPageTitleInput.value.trim();
                 coverPageSettings.logoUrl = coverPageLogoUrlInput.value.trim();
+                coverPageSettings.includeCiencias = includeCienciasCheckbox.checked;
+                coverPageSettings.includeAulas = includeAulasCheckbox.checked;
+                coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
+                saveCoverPageSettings();
+            });
+
+            // Listeners para los nuevos checkboxes de colecciones en portada
+            includeCienciasCheckbox.addEventListener('change', () => {
+                coverPageSettings.includeCiencias = includeCienciasCheckbox.checked;
+                saveCoverPageSettings();
+            });
+            includeAulasCheckbox.addEventListener('change', () => {
+                coverPageSettings.includeAulas = includeAulasCheckbox.checked;
+                saveCoverPageSettings();
+            });
+            includeSociedadCheckbox.addEventListener('change', () => {
+                coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
                 saveCoverPageSettings();
             });
         }
