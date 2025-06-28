@@ -1346,10 +1346,12 @@
                     }
                     .grid-buttons-container {
                         display: flex;
-                        flex-direction: column; /* Buttons stacked vertically */
-                        gap: 0.5rem;
+                        flex-direction: row; /* Changed to row */
+                        flex-wrap: wrap; /* Allow buttons to wrap to the next line if needed */
+                        gap: 0.5rem; /* Space between buttons */
                         margin-top: 1.5rem; /* Added fixed top margin */
                         width: 100%;
+                        justify-content: center; /* Center buttons horizontally */
                     }
                     .action-button {
                         display: flex;
