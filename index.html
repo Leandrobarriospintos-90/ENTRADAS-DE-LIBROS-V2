@@ -91,6 +91,7 @@
                     <option value="Aulas Universitarias">Aulas Universitarias</option>
                     <option value="Coedición">Coedición</option>
                     <option value="Sin Colección">Sin Colección</option>
+                    <option value="Descargas">Descargas</option> <!-- Nuevo filtro para descargas -->
                 </select>
                 <!-- Campo de búsqueda -->
                 <input type="text" id="searchInput" class="form-input w-48 sm:w-64" placeholder="Buscar por Autor o Título">
@@ -116,6 +117,10 @@
                         <input type="text" id="coverPageTitle" class="form-input" placeholder="Título para la portada">
                     </div>
                     <div>
+                        <label for="coverPageSubtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtítulo de Portada (Opcional)</label>
+                        <input type="text" id="coverPageSubtitle" class="form-input" placeholder="Subtítulo para la portada">
+                    </div>
+                    <div>
                         <label for="coverPageLogoUrl" class="block text-sm font-medium text-gray-700 mb-1">URL del Logo (Opcional)</label>
                         <input type="url" id="coverPageLogoUrl" class="form-input" placeholder="https://ejemplo.com/logo.png">
                     </div>
@@ -134,6 +139,10 @@
                             <label class="flex items-center">
                                 <input type="checkbox" id="includeSociedad" class="form-checkbox h-4 w-4 text-blue-600">
                                 <span class="ml-2 text-sm">Colección Sociedad en Movimiento</span>
+                            </label>
+                             <label class="flex items-center">
+                                <input type="checkbox" id="includeCoediciones" class="form-checkbox h-4 w-4 text-blue-600">
+                                <span class="ml-2 text-sm">Coediciones</span>
                             </label>
                         </div>
                     </div>
@@ -289,8 +298,12 @@
                         </div>
                     </div>
                     <div>
-                        <label for="entryPublishYear" class="block text-sm font-medium text-gray-700 mb-1">Año de publicación</label>
-                        <input type="number" id="entryPublishYear" class="form-input" placeholder="Ej: 2023" min="1000" max="3000">
+                        <label for="entryPublishYearPrinted" class="block text-sm font-medium text-gray-700 mb-1">Año de publicación edición impresa</label>
+                        <input type="number" id="entryPublishYearPrinted" class="form-input" placeholder="Ej: 2023" min="1000" max="3000">
+                    </div>
+                    <div>
+                        <label for="entryPublishYearDigital" class="block text-sm font-medium text-gray-700 mb-1">Año de publicación edición digital</label>
+                        <input type="number" id="entryPublishYearDigital" class="form-input" placeholder="Ej: 2023" min="1000" max="3000">
                     </div>
                     <div>
                         <label for="entryPages" class="block text-sm font-medium text-gray-700 mb-1">Páginas</label>
@@ -394,11 +407,13 @@
         const enableCoverPageCheckbox = document.getElementById('enableCoverPage');
         const coverPageFieldsDiv = document.getElementById('coverPageFields');
         const coverPageTitleInput = document.getElementById('coverPageTitle');
+        const coverPageSubtitleInput = document.getElementById('coverPageSubtitle'); // Nuevo input para el subtítulo
         const coverPageLogoUrlInput = document.getElementById('coverPageLogoUrl');
         const saveCoverPageBtn = document.getElementById('saveCoverPageBtn');
         const includeCienciasCheckbox = document.getElementById('includeCiencias'); // Nuevo checkbox
         const includeAulasCheckbox = document.getElementById('includeAulas'); // Nuevo checkbox
         const includeSociedadCheckbox = document.getElementById('includeSociedad'); // Nuevo checkbox
+        const includeCoedicionesCheckbox = document.getElementById('includeCoediciones'); // Nuevo checkbox para Coediciones
         
         const confirmModal = document.getElementById('confirmModal');
         const confirmModalTitle = document.getElementById('confirmModalTitle');
@@ -412,10 +427,12 @@
         let coverPageSettings = {
             isActive: false,
             title: '',
+            subtitle: '', // Nueva propiedad para el subtítulo
             logoUrl: '',
             includeCiencias: false,
             includeAulas: false,
-            includeSociedad: false
+            includeSociedad: false,
+            includeCoediciones: false // Nueva propiedad para Coediciones
         };
         let confirmAction = null;
         const STORAGE_KEY = 'catalogEntries';
@@ -516,6 +533,15 @@
                 if (typeof entry.coeditoriales === 'undefined') {
                     entry.coeditoriales = '';
                 }
+                // Migrar `publicationYear` a `publicationYearPrinted` si existe
+                if (typeof entry.publicationYear !== 'undefined' && typeof entry.publicationYearPrinted === 'undefined') {
+                    entry.publicationYearPrinted = entry.publicationYear;
+                    delete entry.publicationYear; // Eliminar la propiedad antigua
+                }
+                // Asegurarse de que `publicationYearDigital` exista, por defecto a null
+                if (typeof entry.publicationYearDigital === 'undefined') {
+                    entry.publicationYearDigital = null;
+                }
             });
         }
 
@@ -530,15 +556,17 @@
                 // Combinar con las propiedades predeterminadas para asegurar que las nuevas existan
                 coverPageSettings = { ...coverPageSettings, ...loadedSettings };
             } else {
-                coverPageSettings = { isActive: false, title: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false };
+                coverPageSettings = { isActive: false, title: '', subtitle: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false, includeCoediciones: false };
             }
             // Actualizar UI
             enableCoverPageCheckbox.checked = coverPageSettings.isActive;
             coverPageTitleInput.value = coverPageSettings.title;
+            coverPageSubtitleInput.value = coverPageSettings.subtitle; // Cargar el valor del subtítulo
             coverPageLogoUrlInput.value = coverPageSettings.logoUrl;
             includeCienciasCheckbox.checked = coverPageSettings.includeCiencias;
             includeAulasCheckbox.checked = coverPageSettings.includeAulas;
             includeSociedadCheckbox.checked = coverPageSettings.includeSociedad;
+            includeCoedicionesCheckbox.checked = coverPageSettings.includeCoediciones; // Cargar estado del nuevo checkbox
 
             if (coverPageSettings.isActive) {
                 coverPageFieldsDiv.classList.remove('hidden');
@@ -572,29 +600,55 @@
 
             // Aplicar el filtro de colección
             if (selectedCollection !== '') {
-                filteredEntries = filteredEntries.filter(entry => entry.collection === selectedCollection);
+                if (selectedCollection === 'Descargas') {
+                    filteredEntries = filteredEntries.filter(entry => entry.pdfUrl || entry.epubUrl);
+                } else {
+                    filteredEntries = filteredEntries.filter(entry => entry.collection === selectedCollection);
+                }
             }
 
             let currentSortedEntries = [...filteredEntries];
 
             if (sortByDateDirection !== 0) { // Si la ordenación por fecha está habilitada
                 currentSortedEntries.sort((a, b) => {
-                    // Convertir año, mes, día a un formato comparable (ej.,YYYYMMDD)
-                    // Tratar los valores que faltan como 0 para una ordenación consistente, pero manejar los años indefinidos con cuidado
+                    // Función para obtener el año de publicación relevante para la ordenación
+                    const getYearForSorting = (entry) => {
+                        const printedYear = entry.publicationYearPrinted;
+                        const digitalYear = entry.publicationYearDigital;
+
+                        if (printedYear !== null && digitalYear !== null) {
+                            // Si el año digital es posterior al impreso, priorizar el impreso.
+                            if (digitalYear > printedYear) {
+                                return printedYear;
+                            } else {
+                                // En cualquier otro caso (impreso es igual o posterior al digital), usar el más reciente.
+                                return Math.max(printedYear, digitalYear);
+                            }
+                        } else if (printedYear !== null) {
+                            return printedYear; // Solo existe el año impreso
+                        } else if (digitalYear !== null) {
+                            return digitalYear; // Solo existe el año digital
+                        } else {
+                            return 0; // No existe ningún año, se considera 0 para la ordenación
+                        }
+                    };
+
                     const getDateValue = (entry) => {
-                        const year = entry.publicationYear || 0;
+                        const year = getYearForSorting(entry);
                         const month = entry.month || 0;
                         const day = entry.day || 0;
-                        return year * 10000 + month * 100 + day; // Representación numérica de Whittaker
+                        return year * 10000 + month * 100 + day; // Representación numérica para la comparación
                     };
 
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
 
-                    // Manejar casos donde un año podría ser 0 (lo que significa indefinido), ordenándolos al final
-                    if (a.publicationYear === null && b.publicationYear === null) return 0;
-                    if (a.publicationYear === null) return 1; // a va después de b
-                    if (b.publicationYear === null) return -1; // b va después de a
+                    // Manejar casos donde el año de ordenación podría ser 0 (indefinido), ordenándolos al final
+                    const yearA = getYearForSorting(a);
+                    const yearB = getYearForSorting(b);
+                    if (yearA === 0 && yearB === 0) return 0;
+                    if (yearA === 0) return 1; // a va después de b
+                    if (yearB === 0) return -1; // b va después de a
 
                     // Aplicar ascendente o descendente según sortByDateDirection
                     return sortByDateDirection * (dateA - dateB);
@@ -619,21 +673,42 @@
                     // Si las colecciones son las mismas (o ambas no son especiales), ordenar alfabéticamente por nombre de colección
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
+                    
+                    // Función para obtener el año de publicación relevante para la ordenación
+                    const getYearForSorting = (entry) => {
+                        const printedYear = entry.publicationYearPrinted;
+                        const digitalYear = entry.publicationYearDigital;
 
-                    // Luego comparar por fecha (año, mes, día) cuando las colecciones son las mismas
+                        if (printedYear !== null && digitalYear !== null) {
+                            if (digitalYear > printedYear) {
+                                return printedYear; // Priorizar impreso si digital es posterior
+                            } else {
+                                return Math.max(printedYear, digitalYear); // Sino, el más reciente
+                            }
+                        } else if (printedYear !== null) {
+                            return printedYear;
+                        } else if (digitalYear !== null) {
+                            return digitalYear;
+                        } else {
+                            return 0;
+                        }
+                    };
+
                     const getDateValue = (entry) => {
-                        const year = entry.publicationYear || 0;
+                        const year = getYearForSorting(entry);
                         const month = entry.month || 0;
                         const day = entry.day || 0;
-                        return year * 10000 + month * 100 + day; // Representación numérica de Whittaker
+                        return year * 10000 + month * 100 + day;
                     };
 
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
 
-                    if (a.publicationYear === null && b.publicationYear === null) return 0;
-                    if (a.publicationYear === null) return 1;
-                    if (b.publicationYear === null) return -1;
+                    const yearA = getYearForSorting(a);
+                    const yearB = getYearForSorting(b);
+                    if (yearA === 0 && yearB === 0) return 0;
+                    if (yearA === 0) return 1;
+                    if (yearB === 0) return -1;
                     
                     return dateB - dateA; // Por defecto a orden descendente por fecha dentro de la colección
                 });
@@ -666,7 +741,7 @@
                     <div class="flex-grow text-center sm:text-left">
                         <p class="font-bold text-lg text-gray-800">${entry.author || 'Autor no especificado'}</p>
                         <p class="text-sm text-gray-500">${entry.collection}</p>
-                        <p class="text-sm text-gray-500">${entry.publicationYear || ''}</p>
+                        <p class="text-sm text-gray-500">${entry.publicationYearPrinted || ''}</p>
                         <!-- Checkbox de exportación para cada entrada -->
                         <div class="mt-2 flex items-center justify-center sm:justify-start">
                             <input type="checkbox" id="export-${entry.id}" data-id="${entry.id}" class="form-checkbox h-4 w-4 text-blue-600 export-checkbox" ${entry.canExport ? 'checked' : ''}>
@@ -721,8 +796,11 @@
             if (!settings.isActive) return '';
 
             const logoHtml = settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo de la Portada" class="cover-logo" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e2e8f0/cbd5e0?text=Logo+Error';">` : '';
+            const subtitleHtml = settings.subtitle ? `<h2 class="cover-subtitle" style="font-size: 1.8em; margin-top: 0.5em; color: #555;">${settings.subtitle}</h2>` : '';
 
             let selectedCollections = [];
+            let coedicionesIncluded = false; // Flag to track if Coediciones is included
+
             if (settings.includeAulas) {
                 selectedCollections.push("Colección Aulas Universitarias");
             }
@@ -732,11 +810,20 @@
             if (settings.includeSociedad) {
                 selectedCollections.push("Colección Sociedad en Movimiento");
             }
+            if (settings.includeCoediciones) { // Añadir "Coediciones" si está marcada
+                coedicionesIncluded = true;
+            }
 
-            // Ordenar alfabéticamente las colecciones seleccionadas
-            selectedCollections.sort((a, b) => a.localeCompare(b));
+            // Ordenar alfabéticamente las colecciones seleccionadas, excluyendo Coediciones temporalmente
+            const collectionsToSort = selectedCollections.filter(name => name !== "Colección Coedición");
+            collectionsToSort.sort((a, b) => a.localeCompare(b));
 
-            let collectionsHtml = selectedCollections.map(colName => {
+            // Añadir "Coediciones" al final si estaba incluida
+            if (coedicionesIncluded) {
+                collectionsToSort.push("Colección Coedición");
+            }
+
+            let collectionsHtml = collectionsToSort.map(colName => {
                 const rawColName = colName.replace('Colección ', ''); // Quitar "Colección " para obtener el nombre original de la colección
                 return `<p style="color: ${getCollectionColor(rawColName)}; font-size: 1.5em; font-weight: 600; margin-top: 0.5em;">${colName}</p>`;
             }).join('');
@@ -745,6 +832,7 @@
                 <div class="cover-page" style="page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; padding: 2rem;">
                     ${logoHtml}
                     <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #313332;">${settings.title || 'Título de la Portada'}</h1>
+                    ${subtitleHtml} <!-- Insertar el subtítulo aquí -->
                     <div style="width: 20%; height: 1px; background-color: #ccc; margin: 1em auto;"></div> <!-- Línea gris -->
                     ${collectionsHtml}
                 </div>
@@ -770,7 +858,7 @@
         }
 
         /**
-         * Genera la cadena HTML para exportar entradas de catálogo.
+         * Genera la cadena HTML para exportar entradas de catálogo en formato de cuadrícula.
          * @param {Array<Object>} entries - El array de entradas a exportar.
          * @param {boolean} forceWorkTitleVisible - Si es true, fuerza 'workTitleVisible' a true para todas las entradas en la exportación.
          * @returns {string} La cadena HTML generada.
@@ -780,7 +868,6 @@
             const exportableEntries = entries.filter(entry => entry.canExport);
 
             // Crear una copia profunda de exportableEntries para evitar modificar las localEntries originales
-            // cuando forceWorkTitleVisible es true.
             let entriesToRender = JSON.parse(JSON.stringify(exportableEntries));
 
             if (forceWorkTitleVisible) {
@@ -789,12 +876,29 @@
                 });
             }
 
-            // Importante: el HTML exportado debe respetar la ordenación *actual*, si la ordenación por fecha está activa.
-            // Si la ordenación por fecha no está activa, debe usar la ordenación predeterminada por colección/fecha (fecha descendente).
+            // Ordenar las entradas según la configuración actual del usuario
             if (sortByDateDirection !== 0) {
                 entriesToRender.sort((a, b) => {
+                    const getYearForSorting = (entry) => {
+                        const printedYear = entry.publicationYearPrinted;
+                        const digitalYear = entry.publicationYearDigital;
+                        if (printedYear !== null && digitalYear !== null) {
+                            if (digitalYear > printedYear) {
+                                return printedYear;
+                            } else {
+                                return Math.max(printedYear, digitalYear);
+                            }
+                        } else if (printedYear !== null) {
+                            return printedYear;
+                        } else if (digitalYear !== null) {
+                            return digitalYear;
+                        } else {
+                            return 0;
+                        }
+                    };
+
                     const getDateValue = (entry) => {
-                        const year = entry.publicationYear || 0;
+                        const year = getYearForSorting(entry);
                         const month = entry.month || 0;
                         const day = entry.day || 0;
                         return year * 10000 + month * 100 + day;
@@ -802,162 +906,135 @@
 
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
-
-                    if (a.publicationYear === null && b.publicationYear === null) return 0;
-                    if (a.publicationYear === null) return 1;
-                    if (b.publicationYear === null) return -1;
-                    
+                    const yearA = getYearForSorting(a);
+                    const yearB = getYearForSorting(b);
+                    if (yearA === 0 && yearB === 0) return 0;
+                    if (yearA === 0) return 1;
+                    if (yearB === 0) return -1;
                     return sortByDateDirection * (dateA - dateB);
                 });
             } else {
                 entriesToRender.sort((a, b) => {
-                    // Orden personalizado para colecciones: "Coedición" y luego "Sin Colección" van al final
                     const getCollectionSortValue = (collectionName) => {
-                        if (collectionName === "Sin Colección") return 2; // Enviar Sin Colección al final
-                        if (collectionName === "Coedición") return 1;    // Enviar Coedición después de otras colecciones, antes de Sin Colección
-                        return 0; // Otras colecciones se mantienen en su orden natural
+                        if (collectionName === "Sin Colección") return 2;
+                        if (collectionName === "Coedición") return 1;
+                        return 0;
                     };
-
                     const collectionSortA = getCollectionSortValue(a.collection);
                     const collectionSortB = getCollectionSortValue(b.collection);
-
                     if (collectionSortA !== collectionSortB) {
                         return collectionSortA - collectionSortB;
                     }
-
-                    // Si las colecciones son las mismas (o ambas no son especiales), ordenar alfabéticamente por nombre de colección
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
                     
+                    const getYearForSorting = (entry) => {
+                        const printedYear = entry.publicationYearPrinted;
+                        const digitalYear = entry.publicationYearDigital;
+                        if (printedYear !== null && digitalYear !== null) {
+                            if (digitalYear > printedYear) {
+                                return printedYear;
+                            } else {
+                                return Math.max(printedYear, digitalYear);
+                            }
+                        } else if (printedYear !== null) {
+                            return printedYear;
+                        } else if (digitalYear !== null) {
+                            return digitalYear;
+                        } else {
+                            return 0;
+                        }
+                    };
                     const getDateValue = (entry) => {
-                        const year = entry.publicationYear || 0;
+                        const year = getYearForSorting(entry);
                         const month = entry.month || 0;
                         const day = entry.day || 0;
                         return year * 10000 + month * 100 + day;
                     };
-
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
-
-                    if (a.publicationYear === null && b.publicationYear === null) return 0;
-                    if (a.publicationYear === null) return 1;
-                    if (b.publicationYear === null) return -1;
-                    
-                    return dateB - dateA; // Por defecto a orden descendente por fecha dentro de la colección
+                    const yearA = getYearForSorting(a);
+                    const yearB = getYearForSorting(b);
+                    if (yearA === 0 && yearB === 0) return 0;
+                    if (yearA === 0) return 1;
+                    if (yearB === 0) return -1;
+                    return dateB - dateA;
                 });
             }
             
-            // Estilo condicional para el título del libro (autor) basado en forceWorkTitleVisible
-            const bookAuthorFontSize = forceWorkTitleVisible ? '1.08rem' : '1.8rem'; // 1.8rem * 0.6 = 1.08rem
-            
             const entryBlocks = entriesToRender.map(entry => {
                 const display = (value, fallback = '') => value || fallback;
-                const priceText = (value) => value ? `Precio pre-compra online con 50% de descuento: $${Number(value).toFixed(2)}.-` : '';
+                const priceText = (value) => value ? `Precio: $${Number(value).toFixed(2)}.-` : ''; // Simplificar el texto del precio
                 const collectionColor = getCollectionColor(entry.collection);
                 
                 let seriesContent = '';
-                // Manejar "Serie Historias de Vida"
                 if (entry.collection === "Sociedad en Movimiento" && entry.series === "Serie Historias de Vida") {
-                    seriesContent = `<span style="color: #95cd00; margin-left: 8px;">- ${entry.series}</span>`;
-                }
-                // Manejar "Serie Apuntes y Trabajos Prácticos" con color #006bcd
-                else if (entry.collection === "Aulas Universitarias" && entry.series === "Serie Apuntes y Trabajos Prácticos") {
-                    seriesContent = `<span style="color: #006bcd; margin-left: 8px;">- ${entry.series}</span>`;
+                    seriesContent = `<span style="color: #95cd00; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
+                } else if (entry.collection === "Aulas Universitarias" && entry.series === "Serie Apuntes y Trabajos Prácticos") {
+                    seriesContent = `<span style="color: #006bcd; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
                 }
 
                 let collectionDisplayName = display(entry.collection);
-                let coeditorialesContent = ''; 
-
-                if (entry.coeditoriales) { // Mostrar coeditoriales si existe, independientemente de la colección
-                    coeditorialesContent = `<span style="color: ${collectionColor}; margin-left: 8px;">- ${entry.coeditoriales}</span>`;
+                let coeditorialesContent = '';
+                if (entry.coeditoriales) {
+                    coeditorialesContent = `<span style="color: ${collectionColor}; display: block; font-size: 0.85em;">- ${entry.coeditoriales}</span>`;
                 }
-
-                if (entry.collection && entry.collection !== "Sin Colección" && entry.collection !== "Coedición") {
-                    collectionDisplayName = 'Colección ' + collectionDisplayName;
-                } else if (entry.collection === "Coedición") {
-                    collectionDisplayName = entry.collection; // Sin prefijo "Colección " para Coedición
-                } else {
-                    collectionDisplayName = ''; // Sin nombre de colección para "Sin Colección" o vacío
-                }
-
 
                 const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Colección")
                     ? `
                     <div class="collection-header">
-                        <svg width="10" height="10" viewBox="0 0 100 100"><polygon points="0,0 100,50 0,100" fill="${collectionColor}"/></svg>
-                        <span style="color: ${collectionColor};">${collectionDisplayName}</span>
+                        <span style="color: ${collectionColor}; font-weight: 600;">${collectionDisplayName === 'Coedición' ? collectionDisplayName : 'Colección ' + collectionDisplayName}</span>
                         ${seriesContent}
                         ${coeditorialesContent}
                     </div>`
-                    : ''; // Modificado para devolver una cadena vacía si es "Sin Colección"
+                    : '';
                 
                 let workTitleHtml = '';
-                if (entry.workTitle && entry.workTitleVisible) { // Comprobar workTitleVisible
+                if (entry.workTitle && entry.workTitleVisible) {
                     workTitleHtml = `<h3 class="work-title">${display(entry.workTitle)}</h3>`;
                 }
-
-                let metadataHtml = '';
-                if (entry.author) {
-                    metadataHtml += `<li><strong>${display(entry.sourceType, 'Autor/es')}:</strong> ${display(entry.author)}</li>`;
-                }
-                if (entry.publicationYear) metadataHtml += `<li><strong>Año de publicación:</strong> ${entry.publicationYear}</li>`;
-                if (entry.pages) metadataHtml += `<li><strong>Páginas:</strong> ${entry.pages}</li>`;
-                if (entry.format) metadataHtml += `<li><strong>Formato:</strong> ${display(entry.format)}</li>`;
-                if (entry.isbn) metadataHtml += `<li><strong>ISBN:</strong> ${display(entry.isbn)}</li>`;
-                if (entry.isbnDigital) metadataHtml += `<li><strong>ISBN Digital:</strong> ${display(entry.isbnDigital)}</li>`;
 
                 let buttonsHtml = '';
                 if (entry.purchaseUrl) {
                     buttonsHtml += `
-                    <a href="${entry.purchaseUrl}" class="purchase-button" target="_blank" style="background-color: LimeGreen;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                        PRE-COMPRA DE LIBROS ONLINE
+                    <a href="${entry.purchaseUrl}" class="action-button purchase-button" target="_blank" style="background-color: #04a04e;">
+                        Comprar
                     </a>`;
                 }
                 if (entry.pdfUrl) {
                     buttonsHtml += `
-                    <a href="${entry.pdfUrl}" class="download-button pdf" target="_blank">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        DESCARGAR PDF GRATIS
+                    <a href="${entry.pdfUrl}" class="action-button download-button pdf" target="_blank">
+                        PDF
                     </a>`;
                 }
                 if (entry.epubUrl) {
                     buttonsHtml += `
-                    <a href="${entry.epubUrl}" class="download-button epub" target="_blank">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        DESCARGAR EPUB GRATIS
+                    <a href="${entry.epubUrl}" class="action-button download-button epub" target="_blank">
+                        EPUB
                     </a>`;
                 }
 
+                // Simplified metadata for grid view
+                const yearText = entry.publicationYearPrinted ? ` (${entry.publicationYearPrinted})` : '';
+
                 return `
-                <div class="book-entry">
-                    ${collectionHeaderHtml}
-                    <div class="book-content">
-                        <div class="book-cover">
-                            ${entry.coverUrl ? `<img src="${entry.coverUrl}" alt="Portada del libro por ${display(entry.author)}">` : '<div class="cover-placeholder"></div>'}
-                        </div>
-                        <div class="book-details">
-                            ${workTitleHtml}
-                            <h2 class="book-title" style="font-size: ${bookAuthorFontSize};">${display(entry.author, 'Autor no especificado')}</h2>
-                            <p class="price" style="color: LimeGreen;">${priceText(entry.price)}</p>
-                            <div class="separator" style="background-color: LimeGreen;"></div>
-                            <div class="buttons-container">
-                                ${buttonsHtml}
-                            </div>
-                            <ul class="metadata">
-                                ${metadataHtml}
-                            </ul>
+                <div class="grid-book-entry">
+                    <div class="grid-book-cover">
+                        ${entry.coverUrl ? `<img src="${entry.coverUrl}" alt="Portada de ${display(entry.author)}">` : '<div class="cover-placeholder"></div>'}
+                    </div>
+                    <div class="grid-book-details">
+                        ${collectionHeaderHtml}
+                        ${workTitleHtml}
+                        <h2 class="grid-book-title">${display(entry.author, 'Autor no especificado')}${yearText}</h2>
+                        <p class="grid-price" style="color: #04a04e;">${priceText(entry.price)}</p>
+                        <div class="grid-buttons-container">
+                            ${buttonsHtml}
                         </div>
                     </div>
-                    ${entry.description ? `
-                    <div class="book-description">
-                        <p>${display(entry.description).replace(/\n/g, '<br>')}</p>
-                    </div>` : ''}
                 </div>
                 `;
             }).join('');
 
-            // Generar la portada si está activa
             const coverPageHtml = generateCoverPageHtml(coverPageSettings);
 
             return `
@@ -975,88 +1052,159 @@
                     .catalog-wrapper {
                         width: 95%;
                         margin: 0 auto;
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+                        gap: 2rem; /* Espacio entre los elementos de la cuadrícula */
+                        padding-top: 1.5rem;
                     }
-                    .book-entry { max-width: 1500px; margin: 0 auto 3rem auto; border-top: 1px solid #e0e0e0; padding-top: 1.5rem; }
-                    .collection-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; }
-                    .collection-header span { font-weight: 600; font-size: 0.9rem; }
-                    .book-content { display: flex; gap: 2rem; flex-wrap: wrap; }
-                    .book-cover { flex: 1; min-width: 200px; }
-                    .book-cover img { width: 100%; max-width: 400px; height: auto; }
-                    .cover-placeholder { width: 100%; max-width: 400px; height: 375px; background-color: #f0f0f0; border: 1px dashed #ccc; }
-                    .book-details { flex: 2; min-width: 300px; }
-                    .work-title { font-size: 1.5rem; font-style: italic; color: #4b5563; margin-bottom: 0.25rem; }
-                    .book-title { font-size: 1.8rem; font-weight: 700; color: #000; margin: 0 0 0.5rem 0; line-height: 1.2; }
-                    .price { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
-                    .separator { width: 50px; height: 3px; margin-bottom: 1.5rem; }
-                    .buttons-container { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
-                    .purchase-button, .download-button { display: inline-flex; align-items: center; gap: 10px; color: white; font-weight: 700; text-decoration: none; padding: 0.8rem 1.5rem; border-radius: 5px; transition: opacity 0.2s; }
-                    .purchase-button:hover, .download-button:hover { opacity: 0.85; }
-                    .purchase-button svg, .download-button svg { stroke: white; }
+                    @media (max-width: 480px) { /* Una sola columna en pantallas muy pequeñas */
+                        .catalog-wrapper {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+
+                    .grid-book-entry {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        border: none; /* Eliminado el borde */
+                        border-radius: 8px;
+                        padding: 1rem;
+                        box-shadow: none; /* Sombra eliminada por defecto */
+                        background-color: #ffffff; /* Fondo blanco */
+                        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Transición para sombra */
+                    }
+                    .grid-book-entry:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra al pasar el cursor */
+                    }
+                    .grid-book-cover img {
+                        width: 100%;
+                        max-width: 150px; /* Tamaño fijo para las portadas en la cuadrícula */
+                        height: auto;
+                        margin-bottom: 0.8rem;
+                        box-shadow: none; /* Sombra eliminada de la imagen de tapa */
+                        border-radius: 4px;
+                    }
+                    .cover-placeholder { /* Placeholder para imágenes no encontradas en la cuadrícula */
+                        width: 100%;
+                        max-width: 150px;
+                        height: 210px; /* Proporción 200x280 similar */
+                        background-color: #e2e8f0;
+                        border: 1px dashed #cbd5e0;
+                        margin-bottom: 0.8rem;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        color: #cbd5e0;
+                        font-size: 0.8em;
+                        border-radius: 4px;
+                    }
+                    .grid-book-details {
+                        flex-grow: 1;
+                        width: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                    }
+                    .collection-header {
+                        margin-bottom: 0.5rem;
+                    }
+                    .collection-header span {
+                        font-size: 0.8rem;
+                        display: block; /* Asegura que la colección esté en su propia línea si hay serie/coedición */
+                    }
+                    .work-title {
+                        font-size: 0.95rem;
+                        font-style: italic;
+                        color: #4b5563;
+                        margin-bottom: 0.25rem;
+                        word-break: break-word; /* Rompe palabras largas para que no desborden */
+                    }
+                    .grid-book-title {
+                        font-size: 1rem;
+                        font-weight: 700;
+                        color: #000;
+                        margin: 0;
+                        line-height: 1.2;
+                        word-break: break-word;
+                    }
+                    .grid-price {
+                        font-size: 0.9em;
+                        font-weight: 600;
+                        margin-top: 0.5rem;
+                        margin-bottom: 1rem;
+                        color: #04a04e;
+                    }
+                    .grid-buttons-container {
+                        display: flex;
+                        flex-direction: column; /* Botones apilados verticalmente */
+                        gap: 0.5rem;
+                        margin-top: auto; /* Empuja los botones al final */
+                        width: 100%;
+                    }
+                    .action-button {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: 700;
+                        text-decoration: none;
+                        padding: 0.5rem 0.8rem;
+                        border-radius: 5px;
+                        transition: opacity 0.2s;
+                        font-size: 0.8rem; /* Tamaño de fuente más pequeño para botones */
+                    }
+                    .action-button:hover {
+                        opacity: 0.85;
+                    }
                     .download-button.pdf { background-color: #1d4ed8; }
                     .download-button.epub { background-color: #3b82f6; }
-                    .metadata { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; line-height: 1.6; color: #444; }
-                    .metadata li { margin-bottom: 0.3rem; }
-                    .metadata strong { color: #000; }
-                    .book-description { margin-top: 2rem; font-size: 0.95rem; line-height: 1.7; color: #333; }
-                    
-                    /* Estilos para la portada HTML */
+
+                    /* Estilos para la portada HTML (se mantienen similares, ya que es una página separada) */
                     .cover-page {
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
                         align-items: center;
-                        min-height: 100vh; /* Asegura que ocupe al menos toda la altura de la vista */
+                        min-height: 100vh;
                         text-align: center;
                         padding: 2rem;
-                        box-sizing: border-box; /* Incluye padding en el tamaño total */
-                        page-break-after: always; /* Fuerza un salto de página después de la portada */
+                        box-sizing: border-box;
+                        page-break-after: always;
                     }
                     .cover-logo {
                         max-width: 250px;
                         max-height: 250px;
                         height: auto;
                         margin-bottom: 2em;
-                        border-radius: 8px; /* Pequeño redondeado para el logo */
+                        border-radius: 8px;
                         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                     }
                     .cover-title {
                         font-size: 3em;
                         font-weight: 700;
-                        color: #313332; /* Color gris oscuro */
+                        color: #313332;
                         margin-top: 1em;
                         line-height: 1.2;
                     }
-                    
+                    .cover-subtitle {
+                        font-size: 1.8em;
+                        font-weight: 500;
+                        color: #555;
+                        margin-top: 0.5em;
+                        line-height: 1.2;
+                    }
                     @media (max-width: 768px) {
-                        .book-content { flex-direction: column; }
-                        .book-cover img, .cover-placeholder { max-width: 200px; }
-                        .book-title { font-size: 1.5rem; }
-                        .cover-title { font-size: 2.2em; } /* Ajuste para móviles */
-                    }
-                    @media (max-width: 600px) { /* Nuevo: Regla para pantallas de 600px o menos */
-                        .book-cover img { max-width: 400px; width: 100%; } /* Asegura el ancho de 400px o 100% si es más pequeño */
-                    }
-                    @media (max-width: 495px) {
-                        .book-cover {
-                            margin-left: auto;
-                            margin-right: auto;
-                        }
-                        .collection-header, .buttons-container {
-                            justify-content: center;
-                        }
-                        .book-details {
-                            text-align: center;
-                        }
-                        .separator {
-                            margin-left: auto;
-                            margin-right: auto;
-                        }
+                        .cover-title { font-size: 2.2em; }
+                        .cover-subtitle { font-size: 1.5em; }
                     }
                 </style>
             </head>
             <body>
+                ${coverPageHtml}
                 <div class="catalog-wrapper">
-                    ${coverPageHtml}
                     ${entryBlocks}
                 </div>
             </body>
@@ -1132,7 +1280,8 @@
                     sourceType: document.getElementById('entrySourceType').value,
                     workTitle: document.getElementById('entryWorkTitle').value.trim(),
                     workTitleVisible: document.querySelector('input[name="workTitleVisibility"]:checked').value === 'visible',
-                    publicationYear: getNumbValue('entryPublishYear'),
+                    publicationYearPrinted: getNumbValue('entryPublishYearPrinted'), // Nuevo campo
+                    publicationYearDigital: getNumbValue('entryPublishYearDigital'), // Nuevo campo
                     pages: getNumbValue('entryPages'),
                     format: document.getElementById('entryFormat').value.trim(),
                     coverUrl: document.getElementById('entryCoverUrl').value.trim(),
@@ -1237,6 +1386,9 @@
                             canExport: typeof entry.canExport === 'boolean' ? entry.canExport : true,
                             workTitleVisible: typeof entry.workTitleVisible === 'boolean' ? entry.workTitleVisible : false, 
                             coeditoriales: typeof entry.coeditoriales === 'string' ? entry.coeditoriales : '', 
+                            // Asegurarse de que los nuevos campos de año existen y migrar si es necesario
+                            publicationYearPrinted: entry.publicationYearPrinted || entry.publicationYear || null, // Migra el campo antiguo
+                            publicationYearDigital: entry.publicationYearDigital || null,
                         })); 
                         saveEntriesToStorage();
                         renderEntries();
@@ -1259,7 +1411,7 @@
                         localEntries = [];
                         saveEntriesToStorage();
                         // También limpiar la configuración de la portada
-                        coverPageSettings = { isActive: false, title: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false };
+                        coverPageSettings = { isActive: false, title: '', subtitle: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false, includeCoediciones: false }; // Restablecer también el subtítulo y Coediciones
                         saveCoverPageSettings(); 
                         loadCoverPageSettings(); // Recargar la UI de la portada
                         renderEntries();
@@ -1352,7 +1504,8 @@
                 entryCoeditoriales.value = entryToEdit.coeditoriales || ''; // Rellenar coeditoriales
                 document.getElementById('entryMonth').value = entryToEdit.month || ''; 
                 document.getElementById('entryDay').value = entryToEdit.day || '';       
-                document.getElementById('entryPublishYear').value = entryToEdit.publicationYear || '';
+                document.getElementById('entryPublishYearPrinted').value = entryToEdit.publicationYearPrinted || '';
+                document.getElementById('entryPublishYearDigital').value = entryToEdit.publicationYearDigital || '';
                 document.getElementById('entryAuthor').value = entryToEdit.author || '';
                 document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Autor';
                 document.getElementById('entryWorkTitle').value = entryToEdit.workTitle || '';
@@ -1441,10 +1594,12 @@
 
             saveCoverPageBtn.addEventListener('click', () => {
                 coverPageSettings.title = coverPageTitleInput.value.trim();
+                coverPageSettings.subtitle = coverPageSubtitleInput.value.trim(); // Guardar el valor del subtítulo
                 coverPageSettings.logoUrl = coverPageLogoUrlInput.value.trim();
                 coverPageSettings.includeCiencias = includeCienciasCheckbox.checked;
                 coverPageSettings.includeAulas = includeAulasCheckbox.checked;
                 coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
+                coverPageSettings.includeCoediciones = includeCoedicionesCheckbox.checked; // Guardar estado del nuevo checkbox
                 saveCoverPageSettings();
             });
 
@@ -1459,6 +1614,10 @@
             });
             includeSociedadCheckbox.addEventListener('change', () => {
                 coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
+                saveCoverPageSettings();
+            });
+            includeCoedicionesCheckbox.addEventListener('change', () => { // Listener para el nuevo checkbox
+                coverPageSettings.includeCoediciones = includeCoedicionesCheckbox.checked;
                 saveCoverPageSettings();
             });
         }
