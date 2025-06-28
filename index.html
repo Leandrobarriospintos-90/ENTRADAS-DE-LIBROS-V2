@@ -158,9 +158,9 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <button id="importJsonBtn" class="btn btn-info btn-sm">Importar JSON</button>
                         <button id="exportJsonBtn" class="btn btn-secondary btn-sm" disabled>Exportar JSON</button>
-                        <button id="exportHtmlBtn" class="btn btn-success btn-sm" disabled>Exportar HTML</button>
-                        <!-- Nuevo botón para exportar HTML con visibilidad forzada del título de la obra -->
-                        <button id="exportHtmlWithTitleBtn" class="btn btn-success btn-sm" disabled>HTML / Título</button>
+                        <button id="openHtmlExportSettingsBtn" class="btn btn-success btn-sm" disabled>Exportar HTML</button>
+                        <!-- El botón HTML / Título ahora tiene un ID diferente para distinguirlo del botón de abrir el modal -->
+                        <button id="exportHtmlWithForcedTitleBtn" class="btn btn-success btn-sm" disabled>HTML / Título</button>
                         
                         <!-- Checkbox para alternar toda la exportación -->
                         <div class="flex items-center">
@@ -361,32 +361,120 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Nuevo Modal para Configuración de Exportación HTML -->
+    <div id="exportSettingsModal" class="modal-overlay">
+        <div class="modal-container">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Configuración de Exportación HTML</h2>
+            <p class="text-gray-600 mb-4">Selecciona los campos que deseas incluir en el catálogo HTML exportado:</p>
+            <form id="exportSettingsForm">
+                <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeCover" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Imagen de Tapa</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePrice" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Precio</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeCollection" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Colección</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeSeries" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Serie (si aplica)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeCoeditoriales" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Nombre del Colaborador (Coedición)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeAuthor" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Autor / Fuente</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeSourceType" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Rol de la Fuente</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeWorkTitle" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Título de Obra</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePublishYearPrinted" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Año de publicación (impresa)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePublishYearDigital" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Año de publicación (digital)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePages" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Páginas</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeFormat" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Formato</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePurchaseUrl" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">URL de Compra</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludePdfUrl" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">URL de Descarga PDF</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeEpubUrl" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">URL de Descarga EPUB</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeIsbn" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">ISBN</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeIsbnDigital" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">ISBN Digital</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="exportIncludeDescription" class="form-checkbox h-4 w-4 text-blue-600">
+                        <span class="ml-2 text-sm">Descripción</span>
+                    </label>
+                </div>
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" id="cancelExportSettingsModalBtn" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" id="confirmExportHtmlBtn" class="btn btn-primary">Exportar HTML</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Notificación Toast -->
     <div id="notificationToast" class="fixed top-5 right-5 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg transform translate-x-[150%] transition-transform duration-500 ease-in-out z-50">
         <p id="notificationMessage">Message here</p>
     </div>
 
     <script>
-        // --- Variables DOM Globales ---
+        // --- Global DOM Variables ---
         const content = document.getElementById('content');
         const entryCounter = document.getElementById('entryCounter');
         const emptyState = document.getElementById('emptyState');
         const entriesList = document.getElementById('entriesList');
         
         const addEntryBtn = document.getElementById('addEntryBtn');
-        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const openHtmlExportSettingsBtn = document.getElementById('openHtmlExportSettingsBtn'); // Changed ID
         const exportJsonBtn = document.getElementById('exportJsonBtn');
-        const exportHtmlWithTitleBtn = document.getElementById('exportHtmlWithTitleBtn'); // Botón para exportar HTML con título de obra forzado
+        const exportHtmlWithForcedTitleBtn = document.getElementById('exportHtmlWithForcedTitleBtn'); // Changed ID
         const importJsonBtn = document.getElementById('importJsonBtn');
         const importFileEl = document.getElementById('importFile');
         const clearDataBtn = document.getElementById('clearDataBtn');
         const toggleAllExportCheckbox = document.getElementById('toggleAllExportCheckbox');
         const collectionFilter = document.getElementById('collectionFilter');
-        const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // Botón de ordenación por fecha
-        const sortText = document.getElementById('sortText'); // Texto para el botón de ordenación
-        const sortIcon = document.getElementById('sortIcon'); // Contenedor de iconos para el botón de ordenación
-        const searchInput = document.getElementById('searchInput'); // Campo de búsqueda
+        const toggleDateSortBtn = document.getElementById('toggleDateSortBtn'); // Date sorting button
+        const sortText = document.getElementById('sortText'); // Text for sorting button
+        const sortIcon = document.getElementById('sortIcon'); // Icon container for sorting button
+        const searchInput = document.getElementById('searchInput'); // Search field
 
         const addEntryModal = document.getElementById('addEntryModal');
         const addEntryForm = document.getElementById('addEntryForm');
@@ -394,7 +482,7 @@
         const modalTitle = document.getElementById('modalTitle');
         const saveModalBtn = document.getElementById('saveModalBtn');
 
-        // Variables DOM para Coeditoriales y Series
+        // DOM Variables for Co-publishers and Series
         const coeditorialesWrapper = document.getElementById('coeditorialesWrapper');
         const entryCoeditoriales = document.getElementById('entryCoeditoriales');
         const seriesHistoriasDeVidaWrapper = document.getElementById('seriesHistoriasDeVidaWrapper');
@@ -402,18 +490,18 @@
         const seriesApuntesYTrabajosPracticosWrapper = document.getElementById('seriesApuntesYTrabajosPracticosWrapper');
         const seriesApuntesYTrabajosPracticosCheckbox = document.getElementById('entrySeriesApuntesYTrabajosPracticos');
 
-        // Nuevas variables DOM para la portada
+        // New DOM variables for cover page settings
         const coverPageSettingsDiv = document.getElementById('coverPageSettings');
         const enableCoverPageCheckbox = document.getElementById('enableCoverPage');
         const coverPageFieldsDiv = document.getElementById('coverPageFields');
         const coverPageTitleInput = document.getElementById('coverPageTitle');
-        const coverPageSubtitleInput = document.getElementById('coverPageSubtitle'); // Nuevo input para el subtítulo
+        const coverPageSubtitleInput = document.getElementById('coverPageSubtitle'); // New input for subtitle
         const coverPageLogoUrlInput = document.getElementById('coverPageLogoUrl');
         const saveCoverPageBtn = document.getElementById('saveCoverPageBtn');
-        const includeCienciasCheckbox = document.getElementById('includeCiencias'); // Nuevo checkbox
-        const includeAulasCheckbox = document.getElementById('includeAulas'); // Nuevo checkbox
-        const includeSociedadCheckbox = document.getElementById('includeSociedad'); // Nuevo checkbox
-        const includeCoedicionesCheckbox = document.getElementById('includeCoediciones'); // Nuevo checkbox para Coediciones
+        const includeCienciasCheckbox = document.getElementById('includeCiencias'); // New checkbox
+        const includeAulasCheckbox = document.getElementById('includeAulas'); // New checkbox
+        const includeSociedadCheckbox = document.getElementById('includeSociedad'); // New checkbox
+        const includeCoedicionesCheckbox = document.getElementById('includeCoediciones'); // New checkbox for Co-publications
         
         const confirmModal = document.getElementById('confirmModal');
         const confirmModalTitle = document.getElementById('confirmModalTitle');
@@ -421,29 +509,78 @@
         const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
         const confirmBtn = document.getElementById('confirmBtn');
 
-        // --- Almacén de datos local ---
+        // New DOM Variables for Export Settings Modal
+        const exportSettingsModal = document.getElementById('exportSettingsModal');
+        const exportSettingsForm = document.getElementById('exportSettingsForm');
+        const cancelExportSettingsModalBtn = document.getElementById('cancelExportSettingsModalBtn');
+        const confirmExportHtmlBtn = document.getElementById('confirmExportHtmlBtn');
+
+        // Checkboxes inside the export settings modal
+        const exportIncludeCover = document.getElementById('exportIncludeCover');
+        const exportIncludePrice = document.getElementById('exportIncludePrice');
+        const exportIncludeCollection = document.getElementById('exportIncludeCollection');
+        const exportIncludeSeries = document.getElementById('exportIncludeSeries');
+        const exportIncludeCoeditoriales = document.getElementById('exportIncludeCoeditoriales');
+        const exportIncludeAuthor = document.getElementById('exportIncludeAuthor');
+        const exportIncludeSourceType = document.getElementById('exportIncludeSourceType');
+        const exportIncludeWorkTitle = document.getElementById('exportIncludeWorkTitle');
+        const exportIncludePublishYearPrinted = document.getElementById('exportIncludePublishYearPrinted');
+        const exportIncludePublishYearDigital = document.getElementById('exportIncludePublishYearDigital');
+        const exportIncludePages = document.getElementById('exportIncludePages');
+        const exportIncludeFormat = document.getElementById('exportIncludeFormat');
+        const exportIncludePurchaseUrl = document.getElementById('exportIncludePurchaseUrl');
+        const exportIncludePdfUrl = document.getElementById('exportIncludePdfUrl');
+        const exportIncludeEpubUrl = document.getElementById('exportIncludeEpubUrl');
+        const exportIncludeIsbn = document.getElementById('exportIncludeIsbn');
+        const exportIncludeIsbnDigital = document.getElementById('exportIncludeIsbnDigital');
+        const exportIncludeDescription = document.getElementById('exportIncludeDescription');
+
+
+        // --- Local Data Storage ---
         let localEntries = [];
-        // Datos de la portada, con nuevas propiedades para las colecciones
+        // Cover page data, with new properties for collections
         let coverPageSettings = {
             isActive: false,
             title: '',
-            subtitle: '', // Nueva propiedad para el subtítulo
+            subtitle: '', // New property for subtitle
             logoUrl: '',
             includeCiencias: false,
             includeAulas: false,
             includeSociedad: false,
-            includeCoediciones: false // Nueva propiedad para Coediciones
+            includeCoediciones: false // New property for Co-publications
+        };
+        // HTML Export Settings
+        let htmlExportSettings = {
+            includeCover: true,
+            includePrice: true,
+            includeCollection: true,
+            includeSeries: true,
+            includeCoeditoriales: true,
+            includeAuthor: true,
+            includeSourceType: true,
+            includeWorkTitle: true,
+            includePublishYearPrinted: true,
+            includePublishYearDigital: true,
+            includePages: true,
+            includeFormat: true,
+            includePurchaseUrl: true,
+            includePdfUrl: true,
+            includeEpubUrl: true,
+            includeIsbn: true,
+            includeIsbnDigital: true,
+            includeDescription: true,
         };
         let confirmAction = null;
         const STORAGE_KEY = 'catalogEntries';
-        const STORAGE_KEY_COVER_PAGE = 'catalogCoverPageSettings'; // Clave para la configuración de la portada
-        // sortByDateDirection: 0 = Sin ordenar, 1 = Ascendente, -1 = Descendente
-        let sortByDateDirection = 0; // Estado para la dirección de ordenación por fecha
+        const STORAGE_KEY_COVER_PAGE = 'catalogCoverPageSettings'; // Key for cover page settings
+        const STORAGE_KEY_EXPORT_SETTINGS = 'catalogHtmlExportSettings'; // Key for HTML export settings
+        // sortByDateDirection: 0 = No sorting, 1 = Ascending, -1 = Descending
+        let sortByDateDirection = 0; // State for date sorting direction
 
-        // Variable global para almacenar las entradas mostradas actualmente para las actualizaciones de la interfaz de usuario
+        // Global variable to store currently displayed entries for UI updates
         let displayedEntriesForUI = [];
 
-        // --- Funciones de la Interfaz de Usuario ---
+        // --- UI Functions ---
         function showModal(modalElement) { modalElement.classList.add('visible'); }
         function hideModal(modalElement) { modalElement.classList.remove('visible'); }
         
@@ -452,32 +589,32 @@
             const msgEl = document.getElementById('notificationMessage');
             
             msgEl.textContent = message;
-            toast.className = 'fixed top-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg transform transition-transform duration-500 ease-in-out z-50'; // Restablecer clases
+            toast.className = 'fixed top-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg transform transition-transform duration-500 ease-in-out z-50'; // Reset classes
             toast.classList.add(isError ? 'bg-red-600' : 'bg-green-500');
 
-            // Mostrar
+            // Show
             toast.classList.remove('translate-x-[150%]');
             
-            // Ocultar después de 3 segundos
+            // Hide after 3 seconds
             setTimeout(() => {
                 toast.classList.add('translate-x-[150%]');
             }, 3000);
         }
         
         function updateUI() {
-            // Comprobar si alguna entrada (globalmente, no solo las mostradas) está marcada para exportar
+            // Check if any entry (globally, not just displayed) is marked for export
             const canAnyBeExported = localEntries.some(entry => entry.canExport);
             const totalCount = localEntries.length;
             entryCounter.textContent = totalCount;
             
-            exportHtmlBtn.disabled = !canAnyBeExported;
+            openHtmlExportSettingsBtn.disabled = !canAnyBeExported; // Use the new ID
             exportJsonBtn.disabled = !canAnyBeExported;
-            exportHtmlWithTitleBtn.disabled = !canAnyBeExported;
+            exportHtmlWithForcedTitleBtn.disabled = !canAnyBeExported; // Use the new ID
             
-            // Habilitar/deshabilitar el checkbox "Todo" según si hay entradas mostradas
+            // Enable/disable "Select All" checkbox based on whether there are displayed entries
             toggleAllExportCheckbox.disabled = displayedEntriesForUI.length === 0;
 
-            // Establecer el estado del checkbox "Todo" según las entradas *actualmente mostradas*
+            // Set the state of the "Select All" checkbox based on *currently displayed* entries
             if (displayedEntriesForUI.length === 0) {
                 toggleAllExportCheckbox.checked = false;
             } else {
@@ -486,19 +623,19 @@
 
             clearDataBtn.disabled = totalCount === 0;
 
-            // Actualizar el texto y el icono del botón de ordenación por fecha
+            // Update the text and icon of the date sorting button
             let sortIconSvg = '';
             let sortButtonText = 'Orden';
 
-            if (sortByDateDirection === 1) { // Ascendente
+            if (sortByDateDirection === 1) { // Ascending
                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l4-4m0 0l4 4m-4-4v18" />
                               </svg>`;
-            } else if (sortByDateDirection === -1) { // Descendente
+            } else if (sortByDateDirection === -1) { // Descending
                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
                               </svg>`;
-            } else { // Sin ordenar
+            } else { // No sorting
                 sortIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                             </svg>`;
@@ -516,29 +653,29 @@
             }
         }
         
-        // --- Funciones de datos ---
+        // --- Data Functions ---
         function loadEntriesFromStorage() {
             const entriesJson = localStorage.getItem(STORAGE_KEY);
             localEntries = entriesJson ? JSON.parse(entriesJson) : [];
-            // Asegurarse de que la propiedad `canExport` exista para entradas antiguas
+            // Ensure `canExport` property exists for old entries
             localEntries.forEach(entry => {
                 if (typeof entry.canExport === 'undefined') {
                     entry.canExport = true;
                 }
-                // Asegurarse de que la propiedad `workTitleVisible` exista para entradas antiguas, por defecto a false
+                // Ensure `workTitleVisible` property exists for old entries, default to false
                 if (typeof entry.workTitleVisible === 'undefined') {
                     entry.workTitleVisible = false;
                 }
-                // Asegurarse de que la propiedad `coeditoriales` exista para entradas antiguas, por defecto a cadena vacía
+                // Ensure `coeditoriales` property exists for old entries, default to empty string
                 if (typeof entry.coeditoriales === 'undefined') {
                     entry.coeditoriales = '';
                 }
-                // Migrar `publicationYear` a `publicationYearPrinted` si existe
+                // Migrate `publicationYear` to `publicationYearPrinted` if it exists
                 if (typeof entry.publicationYear !== 'undefined' && typeof entry.publicationYearPrinted === 'undefined') {
                     entry.publicationYearPrinted = entry.publicationYear;
-                    delete entry.publicationYear; // Eliminar la propiedad antigua
+                    delete entry.publicationYear; // Delete old property
                 }
-                // Asegurarse de que `publicationYearDigital` exista, por defecto a null
+                // Ensure `publicationYearDigital` exists, default to null
                 if (typeof entry.publicationYearDigital === 'undefined') {
                     entry.publicationYearDigital = null;
                 }
@@ -553,20 +690,20 @@
             const settingsJson = localStorage.getItem(STORAGE_KEY_COVER_PAGE);
             if (settingsJson) {
                 const loadedSettings = JSON.parse(settingsJson);
-                // Combinar con las propiedades predeterminadas para asegurar que las nuevas existan
+                // Combine with default properties to ensure new ones exist
                 coverPageSettings = { ...coverPageSettings, ...loadedSettings };
             } else {
                 coverPageSettings = { isActive: false, title: '', subtitle: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false, includeCoediciones: false };
             }
-            // Actualizar UI
+            // Update UI
             enableCoverPageCheckbox.checked = coverPageSettings.isActive;
             coverPageTitleInput.value = coverPageSettings.title;
-            coverPageSubtitleInput.value = coverPageSettings.subtitle; // Cargar el valor del subtítulo
+            coverPageSubtitleInput.value = coverPageSettings.subtitle; // Load subtitle value
             coverPageLogoUrlInput.value = coverPageSettings.logoUrl;
             includeCienciasCheckbox.checked = coverPageSettings.includeCiencias;
             includeAulasCheckbox.checked = coverPageSettings.includeAulas;
             includeSociedadCheckbox.checked = coverPageSettings.includeSociedad;
-            includeCoedicionesCheckbox.checked = coverPageSettings.includeCoediciones; // Cargar estado del nuevo checkbox
+            includeCoedicionesCheckbox.checked = coverPageSettings.includeCoediciones; // Load state of new checkbox
 
             if (coverPageSettings.isActive) {
                 coverPageFieldsDiv.classList.remove('hidden');
@@ -577,19 +714,75 @@
 
         function saveCoverPageSettings() {
             localStorage.setItem(STORAGE_KEY_COVER_PAGE, JSON.stringify(coverPageSettings));
-            showNotification('Configuración de portada guardada.');
+            showNotification('Cover page settings saved.');
         }
 
+        function loadHtmlExportSettings() {
+            const settingsJson = localStorage.getItem(STORAGE_KEY_EXPORT_SETTINGS);
+            if (settingsJson) {
+                const loadedSettings = JSON.parse(settingsJson);
+                // Combine with default properties to ensure new ones exist
+                htmlExportSettings = { ...htmlExportSettings, ...loadedSettings };
+            } else {
+                // Default settings if none are saved
+                htmlExportSettings = {
+                    includeCover: true,
+                    includePrice: true,
+                    includeCollection: true,
+                    includeSeries: true,
+                    includeCoeditoriales: true,
+                    includeAuthor: true,
+                    includeSourceType: true,
+                    includeWorkTitle: true,
+                    includePublishYearPrinted: true,
+                    includePublishYearDigital: true,
+                    includePages: true,
+                    includeFormat: true,
+                    includePurchaseUrl: true,
+                    includePdfUrl: true,
+                    includeEpubUrl: true,
+                    includeIsbn: true,
+                    includeIsbnDigital: true,
+                    includeDescription: true,
+                };
+            }
+            // Update modal checkboxes based on loaded settings
+            exportIncludeCover.checked = htmlExportSettings.includeCover;
+            exportIncludePrice.checked = htmlExportSettings.includePrice;
+            exportIncludeCollection.checked = htmlExportSettings.includeCollection;
+            exportIncludeSeries.checked = htmlExportSettings.includeSeries;
+            exportIncludeCoeditoriales.checked = htmlExportSettings.includeCoeditoriales;
+            exportIncludeAuthor.checked = htmlExportSettings.includeAuthor;
+            exportIncludeSourceType.checked = htmlExportSettings.includeSourceType;
+            exportIncludeWorkTitle.checked = htmlExportSettings.includeWorkTitle;
+            exportIncludePublishYearPrinted.checked = htmlExportSettings.includePublishYearPrinted;
+            exportIncludePublishYearDigital.checked = htmlExportSettings.includePublishYearDigital;
+            exportIncludePages.checked = htmlExportSettings.includePages;
+            exportIncludeFormat.checked = htmlExportSettings.includeFormat;
+            exportIncludePurchaseUrl.checked = htmlExportSettings.includePurchaseUrl;
+            exportIncludePdfUrl.checked = htmlExportSettings.includePdfUrl;
+            exportIncludeEpubUrl.checked = htmlExportSettings.includeEpubUrl;
+            exportIncludeIsbn.checked = htmlExportSettings.includeIsbn;
+            exportIncludeIsbnDigital.checked = htmlExportSettings.includeIsbnDigital;
+            exportIncludeDescription.checked = htmlExportSettings.includeDescription;
+        }
+
+        function saveHtmlExportSettings() {
+            localStorage.setItem(STORAGE_KEY_EXPORT_SETTINGS, JSON.stringify(htmlExportSettings));
+            showNotification('HTML export settings saved.');
+        }
+
+
         /**
-         * Renderiza las entradas en el DOM, aplicando los filtros y la ordenación actuales.
+         * Renders entries in the DOM, applying current filters and sorting.
          */
         function renderEntries() {
             const selectedCollection = collectionFilter.value;
-            const searchTerm = searchInput.value.toLowerCase(); // Obtener el término de búsqueda y convertirlo a minúsculas
+            const searchTerm = searchInput.value.toLowerCase(); // Get search term and convert to lowercase
 
             let filteredEntries = [...localEntries];
 
-            // Aplicar el filtro de búsqueda primero
+            // Apply search filter first
             if (searchTerm !== '') {
                 filteredEntries = filteredEntries.filter(entry => {
                     const authorMatch = (entry.author || '').toLowerCase().includes(searchTerm);
@@ -598,7 +791,7 @@
                 });
             }
 
-            // Aplicar el filtro de colección
+            // Apply collection filter
             if (selectedCollection !== '') {
                 if (selectedCollection === 'Descargas') {
                     filteredEntries = filteredEntries.filter(entry => entry.pdfUrl || entry.epubUrl);
@@ -609,27 +802,27 @@
 
             let currentSortedEntries = [...filteredEntries];
 
-            if (sortByDateDirection !== 0) { // Si la ordenación por fecha está habilitada
+            if (sortByDateDirection !== 0) { // If date sorting is enabled
                 currentSortedEntries.sort((a, b) => {
-                    // Función para obtener el año de publicación relevante para la ordenación
+                    // Function to get the relevant publication year for sorting
                     const getYearForSorting = (entry) => {
                         const printedYear = entry.publicationYearPrinted;
                         const digitalYear = entry.publicationYearDigital;
 
                         if (printedYear !== null && digitalYear !== null) {
-                            // Si el año digital es posterior al impreso, priorizar el impreso.
+                            // If digital year is later than printed, prioritize printed.
                             if (digitalYear > printedYear) {
                                 return printedYear;
                             } else {
-                                // En cualquier otro caso (impreso es igual o posterior al digital), usar el más reciente.
+                                // In any other case (printed is equal to or later than digital), use the most recent.
                                 return Math.max(printedYear, digitalYear);
                             }
                         } else if (printedYear !== null) {
-                            return printedYear; // Solo existe el año impreso
+                            return printedYear; // Only printed year exists
                         } else if (digitalYear !== null) {
-                            return digitalYear; // Solo existe el año digital
+                            return digitalYear; // Only digital year exists
                         } else {
-                            return 0; // No existe ningún año, se considera 0 para la ordenación
+                            return 0; // No year exists, considered 0 for sorting
                         }
                     };
 
@@ -637,30 +830,30 @@
                         const year = getYearForSorting(entry);
                         const month = entry.month || 0;
                         const day = entry.day || 0;
-                        return year * 10000 + month * 100 + day; // Representación numérica para la comparación
+                        return year * 10000 + month * 100 + day; // Numeric representation for comparison
                     };
 
                     const dateA = getDateValue(a);
                     const dateB = getDateValue(b);
 
-                    // Manejar casos donde el año de ordenación podría ser 0 (indefinido), ordenándolos al final
+                    // Handle cases where the sorting year could be 0 (undefined), sorting them at the end
                     const yearA = getYearForSorting(a);
                     const yearB = getYearForSorting(b);
                     if (yearA === 0 && yearB === 0) return 0;
-                    if (yearA === 0) return 1; // a va después de b
-                    if (yearB === 0) return -1; // b va después de a
+                    if (yearA === 0) return 1; // a goes after b
+                    if (yearB === 0) return -1; // b goes after a
 
-                    // Aplicar ascendente o descendente según sortByDateDirection
+                    // Apply ascending or descending based on sortByDateDirection
                     return sortByDateDirection * (dateA - dateB);
                 });
             } else {
-                // Ordenar por colección, luego por fecha (Año, Mes, Día) en orden DESCENDENTE
+                // Sort by collection, then by date (Year, Month, Day) in DESCENDING order
                 currentSortedEntries.sort((a, b) => {
-                    // Orden personalizado para colecciones: "Coedición" y luego "Sin Colección" van al final
+                    // Custom order for collections: "Coedición" and then "Sin Colección" go to the end
                     const getCollectionSortValue = (collectionName) => {
-                        if (collectionName === "Sin Colección") return 2; // Enviar Sin Colección al final
-                        if (collectionName === "Coedición") return 1;    // Enviar Coedición después de otras colecciones, antes de Sin Colección
-                        return 0; // Otras colecciones se mantienen en su orden natural
+                        if (collectionName === "Sin Colección") return 2; // Send "Sin Colección" to the end
+                        if (collectionName === "Coedición") return 1;    // Send "Coedición" after other collections, before "Sin Colección"
+                        return 0; // Other collections maintain their natural order
                     };
 
                     const collectionSortA = getCollectionSortValue(a.collection);
@@ -670,20 +863,20 @@
                         return collectionSortA - collectionSortB;
                     }
 
-                    // Si las colecciones son las mismas (o ambas no son especiales), ordenar alfabéticamente por nombre de colección
+                    // If collections are the same (or both are not special), sort alphabetically by collection name
                     const collectionCompare = (a.collection || '').localeCompare(b.collection || '');
                     if (collectionCompare !== 0) return collectionCompare;
                     
-                    // Función para obtener el año de publicación relevante para la ordenación
+                    // Function to get the relevant publication year for sorting
                     const getYearForSorting = (entry) => {
                         const printedYear = entry.publicationYearPrinted;
                         const digitalYear = entry.publicationYearDigital;
 
                         if (printedYear !== null && digitalYear !== null) {
                             if (digitalYear > printedYear) {
-                                return printedYear; // Priorizar impreso si digital es posterior
+                                return printedYear; // Prioritize printed if digital is later
                             } else {
-                                return Math.max(printedYear, digitalYear); // Sino, el más reciente
+                                return Math.max(printedYear, digitalYear); // Otherwise, the most recent
                             }
                         } else if (printedYear !== null) {
                             return printedYear;
@@ -710,20 +903,20 @@
                     if (yearA === 0) return 1;
                     if (yearB === 0) return -1;
                     
-                    return dateB - dateA; // Por defecto a orden descendente por fecha dentro de la colección
+                    return dateB - dateA; // Default to descending order by date within the collection
                 });
             }
             
-            entriesList.innerHTML = ''; // Limpiar la lista anterior
-            displayedEntriesForUI = currentSortedEntries; // Almacenar las entradas mostradas actualmente globalmente
+            entriesList.innerHTML = ''; // Clear previous list
+            displayedEntriesForUI = currentSortedEntries; // Store currently displayed entries globally
 
-            if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Solo mostrar estado vacío si no hay entradas en absoluto
-                emptyState.classList.remove('hidden'); // Mostrar estado vacío
-                entriesList.classList.add('hidden'); // Ocultar lista de entradas
-            } else if (currentSortedEntries.length === 0 && localEntries.length > 0) { // No hay entradas que coincidan con el filtro
-                entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No hay entradas que coincidan con los filtros o la búsqueda seleccionada.</div>`;
-                emptyState.classList.add('hidden'); // Ocultar estado vacío
-                entriesList.classList.remove('hidden'); // Mostrar lista de entradas (con mensaje)
+            if (currentSortedEntries.length === 0 && localEntries.length === 0) { // Only show empty state if there are no entries at all
+                emptyState.classList.remove('hidden'); // Show empty state
+                entriesList.classList.add('hidden'); // Hide entry list
+            } else if (currentSortedEntries.length === 0 && localEntries.length > 0) { // No entries match the filter
+                entriesList.innerHTML = `<div class="p-4 text-center text-gray-500">No entries match the selected filters or search.</div>`;
+                emptyState.classList.add('hidden'); // Hide empty state
+                entriesList.classList.remove('hidden'); // Show entry list (with message)
             }
             else {
                 emptyState.classList.add('hidden');
@@ -734,28 +927,28 @@
                 const entryElement = document.createElement('div');
                 entryElement.className = 'flex flex-col sm:flex-row items-start gap-4 p-4';
                 
-                const coverUrl = entry.coverUrl || 'https://placehold.co/200x280/e2e8f0/cbd5e0?text=Sin+Tapa';
+                const coverUrl = entry.coverUrl || 'https://placehold.co/200x280/e2e8f0/cbd5e0?text=No+Cover';
 
                 entryElement.innerHTML = `
-                    <img src="${coverUrl}" onerror="this.onerror=null;this.src='https://placehold.co/200x280/e2e8f0/cbd5e0?text=Error';" alt="Tapa de ${entry.author || 'Entrada sin autor'}" class="w-24 h-auto object-cover rounded-md shadow-sm flex-shrink-0 mx-auto sm:mx-0">
+                    <img src="${coverUrl}" onerror="this.onerror=null;this.src='https://placehold.co/200x280/e2e8f0/cbd5e0?text=Error';" alt="Cover of ${entry.author || 'No author entry'}" class="w-24 h-auto object-cover rounded-md shadow-sm flex-shrink-0 mx-auto sm:mx-0">
                     <div class="flex-grow text-center sm:text-left">
-                        <p class="font-bold text-lg text-gray-800">${entry.author || 'Autor no especificado'}</p>
+                        <p class="font-bold text-lg text-gray-800">${entry.author || 'Author not specified'}</p>
                         <p class="text-sm text-gray-500">${entry.collection}</p>
                         <p class="text-sm text-gray-500">${entry.publicationYearPrinted || ''}</p>
-                        <!-- Checkbox de exportación para cada entrada -->
+                        <!-- Export checkbox for each entry -->
                         <div class="mt-2 flex items-center justify-center sm:justify-start">
                             <input type="checkbox" id="export-${entry.id}" data-id="${entry.id}" class="form-checkbox h-4 w-4 text-blue-600 export-checkbox" ${entry.canExport ? 'checked' : ''}>
-                            <label for="export-${entry.id}" class="ml-2 text-sm text-gray-700">Exportar</label>
+                            <label for="export-${entry.id}" class="ml-2 text-sm text-gray-700">Export</label>
                         </div>
                     </div>
                     <div class="flex gap-2 flex-shrink-0 mx-auto sm:mx-0 mt-4 sm:mt-0">
                         <button class="btn btn-sm btn-secondary edit-btn" data-id="${entry.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
-                            <span>Editar</span>
+                            <span>Edit</span>
                         </button>
                         <button class="btn btn-sm btn-danger delete-btn" data-id="${entry.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                            <span>Borrar</span>
+                            <span>Delete</span>
                         </button>
                     </div>
                 `;
@@ -765,10 +958,10 @@
         }
 
         /**
-         * Función auxiliar para obtener el color de una colección.
-         * Mantiene la consistencia de colores en la aplicación y la exportación.
-         * @param {string} collectionName - Nombre de la colección.
-         * @returns {string} Código de color hexadecimal.
+         * Helper function to get the color of a collection.
+         * Maintains color consistency in the application and export.
+         * @param {string} collectionName - Name of the collection.
+         * @returns {string} Hexadecimal color code.
          */
         function getCollectionColor(collectionName) {
             switch (collectionName) {
@@ -779,23 +972,23 @@
                 case "Aulas Universitarias":
                     return "#006bcd";
                 case "Coedición":
-                    return "#708090"; // Color gris para Coedición
+                    return "#708090"; // Gray color for Coedición
                 case "Sin Colección":
-                    return "#A9A9A9"; // Gris oscuro para Sin Colección
+                    return "#A9A9A9"; // Dark gray for Sin Colección
                 default:
-                    return "#D83A39"; // Color predeterminado
+                    return "#D83A39"; // Default color
             }
         }
 
         /**
-         * Genera la cadena HTML para la portada.
-         * @param {Object} settings - Configuración de la portada (isActive, title, logoUrl, includeCiencias, includeAulas, includeSociedad).
-         * @returns {string} El HTML de la portada o cadena vacía si no está activa.
+         * Generates the HTML string for the cover page.
+         * @param {Object} settings - Cover page settings (isActive, title, logoUrl, includeCiencias, includeAulas, includeSociedad).
+         * @returns {string} The HTML of the cover page or an empty string if not active.
          */
         function generateCoverPageHtml(settings) {
             if (!settings.isActive) return '';
 
-            const logoHtml = settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo de la Portada" class="cover-logo" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e2e8f0/cbd5e0?text=Logo+Error';">` : '';
+            const logoHtml = settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Cover Page Logo" class="cover-logo" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e2e8f0/cbd5e0?text=Logo+Error';">` : '';
             const subtitleHtml = settings.subtitle ? `<h2 class="cover-subtitle" style="font-size: 1.8em; margin-top: 0.5em; color: #555;">${settings.subtitle}</h2>` : '';
 
             let selectedCollections = [];
@@ -810,40 +1003,40 @@
             if (settings.includeSociedad) {
                 selectedCollections.push("Colección Sociedad en Movimiento");
             }
-            if (settings.includeCoediciones) { // Añadir "Coediciones" si está marcada
+            if (settings.includeCoediciones) { // Add "Coediciones" if checked
                 coedicionesIncluded = true;
             }
 
-            // Ordenar alfabéticamente las colecciones seleccionadas, excluyendo Coediciones temporalmente
+            // Sort selected collections alphabetically, temporarily excluding Coediciones
             const collectionsToSort = selectedCollections.filter(name => name !== "Colección Coedición");
             collectionsToSort.sort((a, b) => a.localeCompare(b));
 
-            // Añadir "Coediciones" al final si estaba incluida
+            // Add "Coediciones" at the end if it was included
             if (coedicionesIncluded) {
                 collectionsToSort.push("Colección Coedición");
             }
 
             let collectionsHtml = collectionsToSort.map(colName => {
-                const rawColName = colName.replace('Colección ', ''); // Quitar "Colección " para obtener el nombre original de la colección
+                const rawColName = colName.replace('Colección ', ''); // Remove "Colección " to get the original collection name
                 return `<p style="color: ${getCollectionColor(rawColName)}; font-size: 1.5em; font-weight: 600; margin-top: 0.5em;">${colName}</p>`;
             }).join('');
 
             return `
                 <div class="cover-page" style="page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; padding: 2rem;">
                     ${logoHtml}
-                    <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #313332;">${settings.title || 'Título de la Portada'}</h1>
-                    ${subtitleHtml} <!-- Insertar el subtítulo aquí -->
-                    <div style="width: 20%; height: 1px; background-color: #ccc; margin: 1em auto;"></div> <!-- Línea gris -->
+                    <h1 class="cover-title" style="font-size: 3em; margin-top: 1em; color: #313332;">${settings.title || 'Cover Title'}</h1>
+                    ${subtitleHtml} <!-- Insert subtitle here -->
+                    <div style="width: 20%; height: 1px; background-color: #ccc; margin: 1em auto;"></div> <!-- Gray line -->
                     ${collectionsHtml}
                 </div>
             `;
         }
 
         /**
-         * Descarga el contenido como un archivo.
-         * @param {string} content - El contenido a descargar.
-         * @param {string} fileName - El nombre del archivo.
-         * @param {string} contentType - El tipo MIME del archivo.
+         * Downloads content as a file.
+         * @param {string} content - The content to download.
+         * @param {string} fileName - The name of the file.
+         * @param {string} contentType - The MIME type of the file.
          */
         function downloadFile(content, fileName, contentType) {
             const blob = new Blob([content], { type: contentType });
@@ -858,25 +1051,26 @@
         }
 
         /**
-         * Genera la cadena HTML para exportar entradas de catálogo en formato de cuadrícula.
-         * @param {Array<Object>} entries - El array de entradas a exportar.
-         * @param {boolean} forceWorkTitleVisible - Si es true, fuerza 'workTitleVisible' a true para todas las entradas en la exportación.
-         * @returns {string} La cadena HTML generada.
+         * Generates the HTML string to export catalog entries in grid format.
+         * @param {Array<Object>} entries - The array of entries to export.
+         * @param {Object} exportOptions - Options for what data to include in the export.
+         * @returns {string} The generated HTML string.
          */
-        function generateHtmlForExport(entries, forceWorkTitleVisible = false) {
-            // Filtrar entradas para incluir solo aquellas marcadas para exportar
+        function generateHtmlForExport(entries, exportOptions) {
+            // Filter entries to include only those marked for export
             const exportableEntries = entries.filter(entry => entry.canExport);
 
-            // Crear una copia profunda de exportableEntries para evitar modificar las localEntries originales
+            // Create a deep copy of exportableEntries to avoid modifying the original localEntries
             let entriesToRender = JSON.parse(JSON.stringify(exportableEntries));
 
-            if (forceWorkTitleVisible) {
+            // Apply workTitleVisible override if specified in exportOptions (for "HTML / Título" button)
+            if (exportOptions.forceWorkTitleVisible) {
                 entriesToRender.forEach(entry => {
                     entry.workTitleVisible = true;
                 });
             }
 
-            // Ordenar las entradas según la configuración actual del usuario
+            // Sort entries according to the user's current settings
             if (sortByDateDirection !== 0) {
                 entriesToRender.sort((a, b) => {
                     const getYearForSorting = (entry) => {
@@ -964,23 +1158,25 @@
             
             const entryBlocks = entriesToRender.map(entry => {
                 const display = (value, fallback = '') => value || fallback;
-                const priceText = (value) => value ? `Precio: $${Number(value).toFixed(2)}.-` : ''; // Simplificar el texto del precio
+                const priceText = (value) => value && exportOptions.includePrice ? `Precio: $${Number(value).toFixed(2)}.-` : ''; // Conditionally include price
                 const collectionColor = getCollectionColor(entry.collection);
                 
                 let seriesContent = '';
-                if (entry.collection === "Sociedad en Movimiento" && entry.series === "Serie Historias de Vida") {
-                    seriesContent = `<span style="color: #95cd00; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
-                } else if (entry.collection === "Aulas Universitarias" && entry.series === "Serie Apuntes y Trabajos Prácticos") {
-                    seriesContent = `<span style="color: #006bcd; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
+                if (exportOptions.includeSeries) {
+                    if (entry.collection === "Sociedad en Movimiento" && entry.series === "Serie Historias de Vida") {
+                        seriesContent = `<span style="color: #95cd00; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
+                    } else if (entry.collection === "Aulas Universitarias" && entry.series === "Serie Apuntes y Trabajos Prácticos") {
+                        seriesContent = `<span style="color: #006bcd; display: block; font-size: 0.85em;">- ${entry.series}</span>`;
+                    }
                 }
 
                 let collectionDisplayName = display(entry.collection);
                 let coeditorialesContent = '';
-                if (entry.coeditoriales) {
+                if (exportOptions.includeCoeditoriales && entry.coeditoriales) {
                     coeditorialesContent = `<span style="color: ${collectionColor}; display: block; font-size: 0.85em;">- ${entry.coeditoriales}</span>`;
                 }
 
-                const collectionHeaderHtml = (entry.collection && entry.collection !== "Sin Colección")
+                const collectionHeaderHtml = (exportOptions.includeCollection && entry.collection && entry.collection !== "Sin Colección")
                     ? `
                     <div class="collection-header">
                         <span style="color: ${collectionColor}; font-weight: 600;">${collectionDisplayName === 'Coedición' ? collectionDisplayName : 'Colección ' + collectionDisplayName}</span>
@@ -990,46 +1186,56 @@
                     : '';
                 
                 let workTitleHtml = '';
-                if (entry.workTitle && entry.workTitleVisible) {
+                if (exportOptions.includeWorkTitle && entry.workTitle && entry.workTitleVisible) {
                     workTitleHtml = `<h3 class="work-title">${display(entry.workTitle)}</h3>`;
                 }
 
                 let buttonsHtml = '';
-                if (entry.purchaseUrl) {
+                if (exportOptions.includePurchaseUrl && entry.purchaseUrl) {
                     buttonsHtml += `
                     <a href="${entry.purchaseUrl}" class="action-button purchase-button" target="_blank" style="background-color: #04a04e;">
                         Comprar
                     </a>`;
                 }
-                if (entry.pdfUrl) {
+                if (exportOptions.includePdfUrl && entry.pdfUrl) {
                     buttonsHtml += `
                     <a href="${entry.pdfUrl}" class="action-button download-button pdf" target="_blank">
                         PDF
                     </a>`;
                 }
-                if (entry.epubUrl) {
+                if (exportOptions.includeEpubUrl && entry.epubUrl) {
                     buttonsHtml += `
                     <a href="${entry.epubUrl}" class="action-button download-button epub" target="_blank">
                         EPUB
                     </a>`;
                 }
 
-                // Simplified metadata for grid view
-                const yearText = entry.publicationYearPrinted ? ` (${entry.publicationYearPrinted})` : '';
+                // Conditionally include years
+                let yearText = '';
+                if (exportOptions.includePublishYearPrinted && entry.publicationYearPrinted) {
+                    yearText = ` (${entry.publicationYearPrinted})`;
+                } else if (exportOptions.includePublishYearDigital && entry.publicationYearDigital) {
+                    yearText = ` (${entry.publicationYearDigital})`;
+                }
 
                 return `
                 <div class="grid-book-entry">
                     <div class="grid-book-cover">
-                        ${entry.coverUrl ? `<img src="${entry.coverUrl}" alt="Portada de ${display(entry.author)}">` : '<div class="cover-placeholder"></div>'}
+                        ${exportOptions.includeCover && entry.coverUrl ? `<img src="${entry.coverUrl}" alt="Cover of ${display(entry.author)}">` : '<div class="cover-placeholder"></div>'}
                     </div>
                     <div class="grid-book-details">
                         ${collectionHeaderHtml}
                         ${workTitleHtml}
-                        <h2 class="grid-book-title">${display(entry.author, 'Autor no especificado')}${yearText}</h2>
-                        <p class="grid-price" style="color: #04a04e;">${priceText(entry.price)}</p>
+                        <h2 class="grid-book-title">${exportOptions.includeAuthor ? display(entry.author, 'Author not specified') : ''}${yearText}</h2>
+                        ${exportOptions.includePrice && entry.price ? `<p class="grid-price" style="color: #04a04e;">${priceText(entry.price)}</p>` : ''}
                         <div class="grid-buttons-container">
                             ${buttonsHtml}
                         </div>
+                        ${exportOptions.includePages && entry.pages ? `<p class="grid-metadata">Páginas: ${display(entry.pages)}</p>` : ''}
+                        ${exportOptions.includeFormat && entry.format ? `<p class="grid-metadata">Formato: ${display(entry.format)}</p>` : ''}
+                        ${exportOptions.includeIsbn && entry.isbn ? `<p class="grid-metadata">ISBN: ${display(entry.isbn)}</p>` : ''}
+                        ${exportOptions.includeIsbnDigital && entry.isbnDigital ? `<p class="grid-metadata">ISBN Digital: ${display(entry.isbnDigital)}</p>` : ''}
+                        ${exportOptions.includeDescription && entry.description ? `<p class="grid-description">${display(entry.description)}</p>` : ''}
                     </div>
                 </div>
                 `;
@@ -1054,10 +1260,10 @@
                         margin: 0 auto;
                         display: grid;
                         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
-                        gap: 2rem; /* Espacio entre los elementos de la cuadrícula */
+                        gap: 2rem; /* Space between grid items */
                         padding-top: 1.5rem;
                     }
-                    @media (max-width: 480px) { /* Una sola columna en pantallas muy pequeñas */
+                    @media (max-width: 480px) { /* Single column on very small screens */
                         .catalog-wrapper {
                             grid-template-columns: 1fr;
                         }
@@ -1068,29 +1274,29 @@
                         flex-direction: column;
                         align-items: center;
                         text-align: center;
-                        border: none; /* Eliminado el borde */
+                        border: none; /* Border removed */
                         border-radius: 8px;
                         padding: 1rem;
-                        box-shadow: none; /* Sombra eliminada por defecto */
-                        background-color: #ffffff; /* Fondo blanco */
-                        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Transición para sombra */
+                        box-shadow: none; /* Shadow removed by default */
+                        background-color: #ffffff; /* White background */
+                        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Shadow transition */
                     }
                     .grid-book-entry:hover {
                         transform: translateY(-5px);
-                        box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra al pasar el cursor */
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Shadow on hover */
                     }
                     .grid-book-cover img {
                         width: 100%;
-                        max-width: 150px; /* Tamaño fijo para las portadas en la cuadrícula */
+                        max-width: 150px; /* Fixed size for covers in the grid */
                         height: auto;
                         margin-bottom: 0.8rem;
-                        box-shadow: none; /* Sombra eliminada de la imagen de tapa */
+                        box-shadow: none; /* Shadow removed from cover image */
                         border-radius: 4px;
                     }
-                    .cover-placeholder { /* Placeholder para imágenes no encontradas en la cuadrícula */
+                    .cover-placeholder { /* Placeholder for missing images in the grid */
                         width: 100%;
                         max-width: 150px;
-                        height: 210px; /* Proporción 200x280 similar */
+                        height: 210px; /* Similar 200x280 aspect ratio */
                         background-color: #e2e8f0;
                         border: 1px dashed #cbd5e0;
                         margin-bottom: 0.8rem;
@@ -1113,14 +1319,14 @@
                     }
                     .collection-header span {
                         font-size: 0.8rem;
-                        display: block; /* Asegura que la colección esté en su propia línea si hay serie/coedición */
+                        display: block; /* Ensures collection is on its own line if there's a series/co-publication */
                     }
                     .work-title {
                         font-size: 0.95rem;
                         font-style: italic;
                         color: #4b5563;
                         margin-bottom: 0.25rem;
-                        word-break: break-word; /* Rompe palabras largas para que no desborden */
+                        word-break: break-word; /* Breaks long words so they don't overflow */
                     }
                     .grid-book-title {
                         font-size: 1rem;
@@ -1139,9 +1345,9 @@
                     }
                     .grid-buttons-container {
                         display: flex;
-                        flex-direction: column; /* Botones apilados verticalmente */
+                        flex-direction: column; /* Buttons stacked vertically */
                         gap: 0.5rem;
-                        margin-top: auto; /* Empuja los botones al final */
+                        margin-top: auto; /* Pushes buttons to the end */
                         width: 100%;
                     }
                     .action-button {
@@ -1154,15 +1360,21 @@
                         padding: 0.5rem 0.8rem;
                         border-radius: 5px;
                         transition: opacity 0.2s;
-                        font-size: 0.8rem; /* Tamaño de fuente más pequeño para botones */
+                        font-size: 0.8rem; /* Smaller font size for buttons */
                     }
                     .action-button:hover {
                         opacity: 0.85;
                     }
                     .download-button.pdf { background-color: #1d4ed8; }
                     .download-button.epub { background-color: #3b82f6; }
+                    .grid-metadata, .grid-description {
+                        font-size: 0.85em;
+                        color: #555;
+                        margin-top: 0.2rem;
+                        word-break: break-word;
+                    }
 
-                    /* Estilos para la portada HTML (se mantienen similares, ya que es una página separada) */
+                    /* Styles for HTML cover page (remain similar, as it's a separate page) */
                     .cover-page {
                         display: flex;
                         flex-direction: column;
@@ -1212,31 +1424,31 @@
             `;
         }
 
-        // --- Manejadores de Eventos ---
+        // --- Event Handlers ---
         function setupEventListeners() {
-            // Abrir modal "Añadir Entrada"
+            // Open "Add Entry" modal
             addEntryBtn.addEventListener('click', () => {
                 addEntryForm.reset();
-                // Ocultar todos los wrappers de serie inicialmente
+                // Hide all series wrappers initially
                 seriesHistoriasDeVidaWrapper.classList.add('hidden');
                 seriesHistoriasDeVidaCheckbox.checked = false;
                 seriesApuntesYTrabajosPracticosWrapper.classList.add('hidden');
                 seriesApuntesYTrabajosPracticosCheckbox.checked = false;
-                // El coeditorialesWrapper ahora siempre está visible por defecto en HTML, no es necesario tocarlo aquí.
+                // The coeditorialesWrapper is now always visible by default in HTML, no need to touch it here.
                 document.getElementById('entryEditId').value = '';
-                modalTitle.textContent = 'Añadir Nueva Entrada';
-                saveModalBtn.textContent = 'Guardar Entrada';
+                modalTitle.textContent = 'Add New Entry';
+                saveModalBtn.textContent = 'Save Entry';
                 showModal(addEntryModal);
             });
 
-            // Cancelar modal "Añadir/Editar"
+            // Cancel "Add/Edit" modal
             cancelModalBtn.addEventListener('click', () => hideModal(addEntryModal));
 
-            // Mostrar/ocultar checkboxes/campos de serie según la colección
+            // Show/hide series checkboxes/fields based on collection
             const collectionSelect = document.getElementById('entryCollection');
             
             collectionSelect.addEventListener('change', () => {
-                // Restablecer todos los checkboxes/campos de serie y ocultar sus wrappers
+                // Reset all series checkboxes/fields and hide their wrappers
                 seriesHistoriasDeVidaWrapper.classList.add('hidden');
                 seriesHistoriasDeVidaCheckbox.checked = false;
                 seriesApuntesYTrabajosPracticosWrapper.classList.add('hidden');
@@ -1249,7 +1461,7 @@
                 }
             });
             
-            // Manejar el envío del formulario Añadir/Editar
+            // Handle "Add/Edit" form submission
             addEntryForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 saveModalBtn.disabled = true;
@@ -1272,16 +1484,16 @@
                     id: editId || crypto.randomUUID(),
                     price: getNumbValue('entryPrice'),
                     collection: document.getElementById('entryCollection').value,
-                    series: selectedSeries, // Usar la serie determinada
-                    coeditoriales: entryCoeditoriales.value.trim(), // El campo coeditoriales siempre se lee
+                    series: selectedSeries, // Use the determined series
+                    coeditoriales: entryCoeditoriales.value.trim(), // Co-publisher field is always read
                     month: getNumbValue('entryMonth'), 
-                    day: getNumbValue('entryDay'),       
+                    day: getNumbValue('entryDay'),     
                     author: document.getElementById('entryAuthor').value.trim(),
                     sourceType: document.getElementById('entrySourceType').value,
                     workTitle: document.getElementById('entryWorkTitle').value.trim(),
                     workTitleVisible: document.querySelector('input[name="workTitleVisibility"]:checked').value === 'visible',
-                    publicationYearPrinted: getNumbValue('entryPublishYearPrinted'), // Nuevo campo
-                    publicationYearDigital: getNumbValue('entryPublishYearDigital'), // Nuevo campo
+                    publicationYearPrinted: getNumbValue('entryPublishYearPrinted'), // New field
+                    publicationYearDigital: getNumbValue('entryPublishYearDigital'), // New field
                     pages: getNumbValue('entryPages'),
                     format: document.getElementById('entryFormat').value.trim(),
                     coverUrl: document.getElementById('entryCoverUrl').value.trim(),
@@ -1291,21 +1503,21 @@
                     isbn: document.getElementById('entryIsbn').value.trim(),
                     isbnDigital: document.getElementById('entryIsbnDigital').value.trim(),
                     description: document.getElementById('entryDescription').value.trim(),
-                    canExport: true, // Las nuevas entradas son exportables por defecto
+                    canExport: true, // New entries are exportable by default
                 };
                 
                 if (editId) {
-                    // Actualizar entrada existente
+                    // Update existing entry
                     const index = localEntries.findIndex(entry => entry.id === editId);
                     if (index !== -1) {
-                        // Preservar el estado `canExport` existente
+                        // Preserve existing `canExport` status
                         localEntries[index] = { ...entryData, canExport: localEntries[index].canExport };
                     }
-                    showNotification('Entrada actualizada con éxito.');
+                    showNotification('Entry updated successfully.');
                 } else {
-                    // Añadir nueva entrada
+                    // Add new entry
                     localEntries.push(entryData);
-                    showNotification('Entrada añadida con éxito.');
+                    showNotification('Entry added successfully.');
                 }
                 
                 saveEntriesToStorage();
@@ -1314,47 +1526,84 @@
                 saveModalBtn.disabled = false;
             });
 
-            // Exportar a HTML
-            exportHtmlBtn.addEventListener('click', () => {
-                // Filtrar entradas para incluir solo aquellas marcadas para exportar
-                const exportableEntries = localEntries.filter(entry => entry.canExport);
-                if (exportableEntries.length === 0 && !coverPageSettings.isActive) { // También verifica si la portada está activa
-                    showNotification('No hay entradas seleccionadas para exportar ni portada activa.', true);
-                    return;
-                }
-                // Llamar a generateHtmlForExport sin forzar workTitleVisible
-                const htmlContent = generateHtmlForExport(exportableEntries, false);
-                downloadFile(htmlContent, 'catalogo.html', 'text/html');
-                showNotification('Catálogo HTML exportado con éxito.');
+            // Open HTML Export Settings Modal
+            openHtmlExportSettingsBtn.addEventListener('click', () => {
+                loadHtmlExportSettings(); // Load current settings into the modal checkboxes
+                showModal(exportSettingsModal);
             });
 
-            // Nuevo: Exportar a HTML con visibilidad forzada del título de la obra
-            exportHtmlWithTitleBtn.addEventListener('click', () => {
+            // Confirm HTML Export with selected settings
+            exportSettingsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                confirmExportHtmlBtn.disabled = true;
+
+                // Update htmlExportSettings based on checkbox states
+                htmlExportSettings = {
+                    includeCover: exportIncludeCover.checked,
+                    includePrice: exportIncludePrice.checked,
+                    includeCollection: exportIncludeCollection.checked,
+                    includeSeries: exportIncludeSeries.checked,
+                    includeCoeditoriales: exportIncludeCoeditoriales.checked,
+                    includeAuthor: exportIncludeAuthor.checked,
+                    includeSourceType: exportIncludeSourceType.checked,
+                    includeWorkTitle: exportIncludeWorkTitle.checked,
+                    includePublishYearPrinted: exportIncludePublishYearPrinted.checked,
+                    includePublishYearDigital: exportIncludePublishYearDigital.checked,
+                    includePages: exportIncludePages.checked,
+                    includeFormat: exportIncludeFormat.checked,
+                    includePurchaseUrl: exportIncludePurchaseUrl.checked,
+                    includePdfUrl: exportIncludePdfUrl.checked,
+                    includeEpubUrl: exportIncludeEpubUrl.checked,
+                    includeIsbn: exportIncludeIsbn.checked,
+                    includeIsbnDigital: exportIncludeIsbnDigital.checked,
+                    includeDescription: exportIncludeDescription.checked,
+                };
+                saveHtmlExportSettings(); // Save these settings
+
                 const exportableEntries = localEntries.filter(entry => entry.canExport);
                 if (exportableEntries.length === 0 && !coverPageSettings.isActive) {
-                    showNotification('No hay entradas seleccionadas para exportar ni portada activa.', true);
+                    showNotification('No entries selected for export or cover page active.', true);
+                    confirmExportHtmlBtn.disabled = false;
+                    hideModal(exportSettingsModal);
                     return;
                 }
-                // Llamar a generateHtmlForExport con forceWorkTitleVisible = true
-                const htmlContent = generateHtmlForExport(exportableEntries, true);
-                downloadFile(htmlContent, 'catalogo_con_titulos.html', 'text/html');
-                showNotification('Catálogo HTML exportado con "Título de Obra" visible.');
+                const htmlContent = generateHtmlForExport(exportableEntries, { ...htmlExportSettings, forceWorkTitleVisible: false }); // Pass the options
+                downloadFile(htmlContent, 'catalog.html', 'text/html');
+                showNotification('HTML Catalog exported successfully.');
+                confirmExportHtmlBtn.disabled = false;
+                hideModal(exportSettingsModal);
             });
 
-            // Exportar a JSON
+            // Cancel HTML Export Settings Modal
+            cancelExportSettingsModalBtn.addEventListener('click', () => hideModal(exportSettingsModal));
+
+            // New: Export HTML with forced work title visibility
+            exportHtmlWithForcedTitleBtn.addEventListener('click', () => {
+                const exportableEntries = localEntries.filter(entry => entry.canExport);
+                if (exportableEntries.length === 0 && !coverPageSettings.isActive) {
+                    showNotification('No entries selected for export or cover page active.', true);
+                    return;
+                }
+                // Call generateHtmlForExport with forceWorkTitleVisible = true, ignoring other export settings for workTitle
+                const htmlContent = generateHtmlForExport(exportableEntries, { ...htmlExportSettings, forceWorkTitleVisible: true });
+                downloadFile(htmlContent, 'catalog_with_titles.html', 'text/html');
+                showNotification('HTML Catalog exported with "Work Title" visible.');
+            });
+
+            // Export to JSON
             exportJsonBtn.addEventListener('click', () => {
-                // Filtrar entradas para incluir solo aquellas marcadas para exportar
+                // Filter entries to include only those marked for export
                 const exportableEntries = localEntries.filter(entry => entry.canExport);
                 if (exportableEntries.length === 0) {
-                    showNotification('No hay entradas seleccionadas para exportar.', true);
+                    showNotification('No entries selected for export.', true);
                     return;
                 }
                 const jsonContent = JSON.stringify(exportableEntries, null, 2);
-                downloadFile(jsonContent, 'catalogo.json', 'application/json');
-                showNotification('Catálogo JSON exportado con éxito.');
+                downloadFile(jsonContent, 'catalog.json', 'application/json');
+                showNotification('JSON Catalog exported successfully.');
             });
             
-            // Importar desde JSON
+            // Import from JSON
             importJsonBtn.addEventListener('click', () => importFileEl.click());
             importFileEl.addEventListener('change', (event) => {
                 const file = event.target.files[0];
@@ -1366,17 +1615,17 @@
                     try {
                         importedEntries = JSON.parse(e.target.result);
                         if (!Array.isArray(importedEntries)) {
-                            throw new Error("El archivo JSON no contiene un array de entradas.");
+                            throw new Error("The JSON file does not contain an array of entries.");
                         }
                     } catch (err) {
-                        showNotification(`Error al leer el archivo: ${err.message}`, true);
+                        showNotification(`Error reading file: ${err.message}`, true);
                         return;
                     }
                     
-                    confirmModalTitle.textContent = '¿Importar entradas?';
-                    confirmModalText.textContent = `Se encontraron ${importedEntries.length} entradas. Esto borrará todas las entradas actuales. ¿Deseas continuar?`;
+                    confirmModalTitle.textContent = 'Import entries?';
+                    confirmModalText.textContent = `Found ${importedEntries.length} entries. This will delete all current entries. Do you want to continue?`;
                     confirmBtn.className = 'btn btn-info';
-                    confirmBtn.textContent = 'Sí, importar';
+                    confirmBtn.textContent = 'Yes, import';
                     showModal(confirmModal);
 
                     confirmAction = () => {
@@ -1386,41 +1635,41 @@
                             canExport: typeof entry.canExport === 'boolean' ? entry.canExport : true,
                             workTitleVisible: typeof entry.workTitleVisible === 'boolean' ? entry.workTitleVisible : false, 
                             coeditoriales: typeof entry.coeditoriales === 'string' ? entry.coeditoriales : '', 
-                            // Asegurarse de que los nuevos campos de año existen y migrar si es necesario
-                            publicationYearPrinted: entry.publicationYearPrinted || entry.publicationYear || null, // Migra el campo antiguo
+                            // Ensure new year fields exist and migrate if necessary
+                            publicationYearPrinted: entry.publicationYearPrinted || entry.publicationYear || null, // Migrate old field
                             publicationYearDigital: entry.publicationYearDigital || null,
                         })); 
                         saveEntriesToStorage();
                         renderEntries();
-                        showNotification(`Se importaron ${importedEntries.length} entradas con éxito.`);
+                        showNotification(`Successfully imported ${importedEntries.length} entries.`);
                     };
                 };
                 reader.readAsText(file);
-                importFileEl.value = ''; // Restablecer el input del archivo
+                importFileEl.value = ''; // Reset file input
             });
 
-            // Mostrar confirmación para "Limpiar Todo"
+            // Show confirmation for "Clear All"
             clearDataBtn.addEventListener('click', () => {
                 if (localEntries.length > 0) {
-                    confirmModalTitle.textContent = '¿Limpiar todo?';
-                    confirmModalText.textContent = 'Esta acción eliminará PERMANENTEMENTE todas las entradas. No se puede deshacer.';
-                    confirmBtn.className = 'btn btn-danger'; // Restablecer clase
-                    confirmBtn.textContent = 'Sí, limpiar todo';
+                    confirmModalTitle.textContent = 'Clear all?';
+                    confirmModalText.textContent = 'This action will PERMANENTLY delete all entries. It cannot be undone.';
+                    confirmBtn.className = 'btn btn-danger'; // Reset class
+                    confirmBtn.textContent = 'Yes, clear all';
                     showModal(confirmModal);
                     confirmAction = () => {
                         localEntries = [];
                         saveEntriesToStorage();
-                        // También limpiar la configuración de la portada
-                        coverPageSettings = { isActive: false, title: '', subtitle: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false, includeCoediciones: false }; // Restablecer también el subtítulo y Coediciones
+                        // Also clear cover page settings
+                        coverPageSettings = { isActive: false, title: '', subtitle: '', logoUrl: '', includeCiencias: false, includeAulas: false, includeSociedad: false, includeCoediciones: false }; // Reset subtitle and Co-publications too
                         saveCoverPageSettings(); 
-                        loadCoverPageSettings(); // Recargar la UI de la portada
+                        loadCoverPageSettings(); // Reload cover page UI
                         renderEntries();
-                        showNotification('Todas las entradas han sido eliminadas.', false);
+                        showNotification('All entries have been deleted.', false);
                     };
                 }
             });
 
-            // Manejar clics en los botones Editar/Eliminar y los checkboxes de exportación usando delegación de eventos
+            // Handle clicks on Edit/Delete buttons and export checkboxes using event delegation
             entriesList.addEventListener('click', e => {
                 const target = e.target.closest('button, input[type="checkbox"]');
                 if (!target) return;
@@ -1435,13 +1684,13 @@
                 }
             });
 
-            // Manejar el cambio del checkbox "Todo"
+            // Handle "Select All" checkbox change
             toggleAllExportCheckbox.addEventListener('change', (event) => {
                 const shouldCheckAll = event.target.checked;
                 let changesMade = false;
 
-                // Iterar sobre las entradas actualmente mostradas (que ya están filtradas)
-                // Y actualizar su estado 'canExport' en el array principal 'localEntries'
+                // Iterate over currently displayed entries (which are already filtered)
+                // and update their 'canExport' status in the main 'localEntries' array
                 displayedEntriesForUI.forEach(displayedEntry => {
                     const originalEntry = localEntries.find(entry => entry.id === displayedEntry.id);
                     if (originalEntry && originalEntry.canExport !== shouldCheckAll) {
@@ -1452,35 +1701,35 @@
 
                 if (changesMade) {
                     saveEntriesToStorage();
-                    renderEntries(); // Volver a renderizar para reflejar los cambios individuales del checkbox y actualizar el estado general de la interfaz de usuario
-                    showNotification(shouldCheckAll ? 'Todas las entradas visibles seleccionadas para exportar.' : 'Todas las entradas visibles deseleccionadas para exportar.');
+                    renderEntries(); // Re-render to reflect individual checkbox changes and update overall UI state
+                    showNotification(shouldCheckAll ? 'All visible entries selected for export.' : 'All visible entries deselected for export.');
                 } else {
-                    showNotification('No hubo cambios en la selección de exportación de las entradas visibles.');
+                    showNotification('No changes were made to the export selection of visible entries.');
                 }
             });
 
-            // Manejar el cambio del filtro de colección - ahora también alterna el estado de exportación para esa colección
+            // Handle collection filter change - now also toggles export state for that collection
             collectionFilter.addEventListener('change', () => {
-                // Cuando el filtro de colección cambia, volver a renderizar las entradas para aplicar tanto los filtros de colección como de búsqueda
+                // When the collection filter changes, re-render entries to apply both collection and search filters
                 renderEntries(); 
             });
 
-            // Nuevo: Manejar cambios en el campo de búsqueda
+            // New: Handle search field changes
             searchInput.addEventListener('input', () => {
-                // Cuando el campo de búsqueda cambia, volver a renderizar las entradas para aplicar tanto los filtros de colección como de búsqueda
+                // When the search field changes, re-render entries to apply both collection and search filters
                 renderEntries();
             });
 
-            // Manejar el clic en el botón de alternar ordenación por fecha
+            // Handle click on date sort toggle button
             toggleDateSortBtn.addEventListener('click', () => {
-                sortByDateDirection = (sortByDateDirection + 2) % 3 - 1; // Cicla entre 0, 1, -1
-                renderEntries(); // Volver a renderizar con la nueva preferencia de ordenación
+                sortByDateDirection = (sortByDateDirection + 2) % 3 - 1; // Cycles between 0, 1, -1
+                renderEntries(); // Re-render with new sorting preference
                 if (sortByDateDirection === 1) {
-                    showNotification('Ordenado por fecha exacta (Año, Mes, Día) de forma ascendente.');
+                    showNotification('Sorted by exact date (Year, Month, Day) in ascending order.');
                 } else if (sortByDateDirection === -1) {
-                    showNotification('Ordenado por fecha exacta (Año, Mes, Día) de forma descendente.');
+                    showNotification('Sorted by exact date (Year, Month, Day) in descending order.');
                 } else {
-                    showNotification('Ordenado por colección y fecha.');
+                    showNotification('Sorted by collection and date.');
                 }
             });
 
@@ -1489,7 +1738,7 @@
                 if (entryIndex !== -1) {
                     localEntries[entryIndex].canExport = isChecked;
                     saveEntriesToStorage();
-                    updateUI(); // Actualizar estados de los botones basados en la nueva selección de exportación
+                    updateUI(); // Update button states based on new export selection
                 }
             }
 
@@ -1497,19 +1746,19 @@
                 const entryToEdit = localEntries.find(entry => entry.id === id);
                 if (!entryToEdit) return;
                 
-                // Rellenar formulario
+                // Fill form
                 document.getElementById('entryEditId').value = id;
                 document.getElementById('entryPrice').value = entryToEdit.price || '';
                 collectionSelect.value = entryToEdit.collection || '';
-                entryCoeditoriales.value = entryToEdit.coeditoriales || ''; // Rellenar coeditoriales
+                entryCoeditoriales.value = entryToEdit.coeditoriales || ''; // Fill co-publishers
                 document.getElementById('entryMonth').value = entryToEdit.month || ''; 
-                document.getElementById('entryDay').value = entryToEdit.day || '';       
+                document.getElementById('entryDay').value = entryToEdit.day || '';     
                 document.getElementById('entryPublishYearPrinted').value = entryToEdit.publicationYearPrinted || '';
                 document.getElementById('entryPublishYearDigital').value = entryToEdit.publicationYearDigital || '';
                 document.getElementById('entryAuthor').value = entryToEdit.author || '';
-                document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Autor';
+                document.getElementById('entrySourceType').value = entryToEdit.sourceType || 'Author';
                 document.getElementById('entryWorkTitle').value = entryToEdit.workTitle || '';
-                // Establecer el botón de radio para workTitleVisibility
+                // Set radio button for workTitleVisibility
                 if(entryToEdit.workTitleVisible) {
                     document.querySelector('input[name="workTitleVisibility"][value="visible"]').checked = true;
                 } else {
@@ -1525,7 +1774,7 @@
                 document.getElementById('entryIsbnDigital').value = entryToEdit.isbnDigital || '';
                 document.getElementById('entryDescription').value = entryToEdit.description || '';
                 
-                // Restablecer y luego mostrar/ocultar y establecer los campos/checkboxes de serie
+                // Reset and then show/hide and set series fields/checkboxes
                 seriesHistoriasDeVidaWrapper.classList.add('hidden');
                 seriesHistoriasDeVidaCheckbox.checked = false;
                 seriesApuntesYTrabajosPracticosWrapper.classList.add('hidden');
@@ -1539,27 +1788,27 @@
                     seriesApuntesYTrabajosPracticosCheckbox.checked = (entryToEdit.series === "Serie Apuntes y Trabajos Prácticos");
                 }
                 
-                // Actualizar la interfaz de usuario del modal
-                modalTitle.textContent = 'Editar Entrada';
-                saveModalBtn.textContent = 'Guardar Cambios';
+                // Update modal UI
+                modalTitle.textContent = 'Edit Entry';
+                saveModalBtn.textContent = 'Save Changes';
                 showModal(addEntryModal);
             }
 
             function handleDelete(id) {
-                confirmModalTitle.textContent = '¿Eliminar esta entrada?';
-                confirmModalText.textContent = 'Esta acción no se puede deshacer.';
+                confirmModalTitle.textContent = 'Delete this entry?';
+                confirmModalText.textContent = 'This action cannot be undone.';
                 confirmBtn.className = 'btn btn-danger';
-                confirmBtn.textContent = 'Sí, eliminar';
+                confirmBtn.textContent = 'Yes, delete';
                 showModal(confirmModal);
                 confirmAction = () => {
                     localEntries = localEntries.filter(entry => entry.id !== id);
                     saveEntriesToStorage();
                     renderEntries();
-                    showNotification('Entrada eliminada.');
+                    showNotification('Entry deleted.');
                 };
             }
 
-            // Lógica del modal de confirmación
+            // Confirmation modal logic
             cancelConfirmBtn.addEventListener('click', () => {
                 hideModal(confirmModal);
                 confirmAction = null;
@@ -1572,7 +1821,7 @@
                         confirmAction();
                     } catch (error) {
                         console.error("Confirmation action failed:", error);
-                        showNotification("La operación falló.", true);
+                        showNotification("Operation failed.", true);
                     } finally {
                         hideModal(confirmModal);
                         confirmBtn.disabled = false;
@@ -1581,7 +1830,7 @@
                 }
             });
 
-            // Manejo de la configuración de la portada
+            // Cover page settings handling
             enableCoverPageCheckbox.addEventListener('change', () => {
                 coverPageSettings.isActive = enableCoverPageCheckbox.checked;
                 if (coverPageSettings.isActive) {
@@ -1589,21 +1838,21 @@
                 } else {
                     coverPageFieldsDiv.classList.add('hidden');
                 }
-                saveCoverPageSettings(); // Guarda el estado de activación inmediatamente
+                saveCoverPageSettings(); // Save activation state immediately
             });
 
             saveCoverPageBtn.addEventListener('click', () => {
                 coverPageSettings.title = coverPageTitleInput.value.trim();
-                coverPageSettings.subtitle = coverPageSubtitleInput.value.trim(); // Guardar el valor del subtítulo
+                coverPageSettings.subtitle = coverPageSubtitleInput.value.trim(); // Save subtitle value
                 coverPageSettings.logoUrl = coverPageLogoUrlInput.value.trim();
                 coverPageSettings.includeCiencias = includeCienciasCheckbox.checked;
                 coverPageSettings.includeAulas = includeAulasCheckbox.checked;
                 coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
-                coverPageSettings.includeCoediciones = includeCoedicionesCheckbox.checked; // Guardar estado del nuevo checkbox
+                coverPageSettings.includeCoediciones = includeCoedicionesCheckbox.checked; // Save state of new checkbox
                 saveCoverPageSettings();
             });
 
-            // Listeners para los nuevos checkboxes de colecciones en portada
+            // Listeners for new cover page collection checkboxes
             includeCienciasCheckbox.addEventListener('change', () => {
                 coverPageSettings.includeCiencias = includeCienciasCheckbox.checked;
                 saveCoverPageSettings();
@@ -1616,20 +1865,21 @@
                 coverPageSettings.includeSociedad = includeSociedadCheckbox.checked;
                 saveCoverPageSettings();
             });
-            includeCoedicionesCheckbox.addEventListener('change', () => { // Listener para el nuevo checkbox
+            includeCoedicionesCheckbox.addEventListener('change', () => { // Listener for the new checkbox
                 coverPageSettings.includeCoediciones = includeCoedicionesCheckbox.checked;
                 saveCoverPageSettings();
             });
         }
         
-        // --- Inicialización de la aplicación ---
+        // --- Application Initialization ---
         function startApp() {
             document.getElementById('year').textContent = new Date().getFullYear();
             loadEntriesFromStorage();
-            loadCoverPageSettings(); // Cargar la configuración de la portada al inicio
-            renderEntries(); // Renderizado inicial con todas las entradas
+            loadCoverPageSettings(); // Load cover page settings on start
+            loadHtmlExportSettings(); // Load HTML export settings on start
+            renderEntries(); // Initial rendering with all entries
             setupEventListeners();
-            console.log("Aplicación de recolección de entradas iniciada con LocalStorage.");
+            console.log("Catalog Entry Collector application started with LocalStorage.");
         }
         
         startApp();
